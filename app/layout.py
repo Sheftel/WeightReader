@@ -75,9 +75,12 @@ class Layout:
             self.start_button.config(state=NORMAL)
 
     def period_write_callback(self, *args):
-        if self.period.get() > MAX_PERIOD:
+        period = self.period.get()
+        if not isinstance(period, int):
+            return self.period.set(DEFAULT_PERIOD)
+        if period > MAX_PERIOD:
             return self.period.set(MAX_PERIOD)
-        if self.period.get() < MIN_PERIOD:
+        if period < MIN_PERIOD:
             return self.period.set(MIN_PERIOD)
 
     def reset_layout(self):

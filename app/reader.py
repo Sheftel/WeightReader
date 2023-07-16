@@ -11,6 +11,7 @@ def read_data(layout, serial, filename, period=1):
     assumes that this method won't be called with filename = None
     """
     thread = current_thread()
+    serial.timeout = period
     try:
         os.makedirs(os.path.dirname(filename), exist_ok=True)
     except FileNotFoundError:
@@ -20,16 +21,11 @@ def read_data(layout, serial, filename, period=1):
 
     now = 0
     while not getattr(thread, "stop_thread", False):
-        # do some stuff
-        print(now)
-        file.write(str(now) + ' - data\n')
+        reading = serial.readline().decode() or 'Нет сигнала'
+        file.write(str(now) + ' - ' + reading + '\n')
         file.flush()
-        start = time.time()
         now += period
         time.sleep(period)
-        stop = time.time()
-        duration = stop - start
-        print(duration)
     if getattr(thread, "stop_thread", False):
         file.write('\n')
         file.close()
