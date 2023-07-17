@@ -17,9 +17,13 @@ class Layout:
         self.filename = StringVar()
         self.filename.trace_add("write", self.filename_write_callback)
         filename_label = ttk.Label(mainframe, text='Название файла: ')
-        self.filename_entry = ttk.Entry(mainframe, textvariable=self.filename, width=42)
+        self.filename_entry = ttk.Entry(mainframe, textvariable=self.filename, width=50)
         self.filename_button_image = PhotoImage(file=STATIC_PATH / "file.png")
-        self.filename_button = ttk.Button(mainframe, image=self.filename_button_image, command=self.select_file)
+        filename_buttons = ttk.Frame(mainframe)
+        self.filename_open_button = ttk.Button(filename_buttons, text='Открыть файл', command=self.select_file,
+                                               width=20)
+        self.filename_save_button = ttk.Button(filename_buttons, text='Создать новый файл', command=self.save_file,
+                                               width=20)
 
         self.period = IntVar()
         self.period.trace_add("write", self.period_write_callback)
@@ -35,12 +39,14 @@ class Layout:
 
         mainframe.grid(column=0, row=0)
         filename_label.grid(column=0, row=0, sticky=(N, W), padx=10, columnspan=5)
-        self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(15, 0), pady=(1, 1), columnspan=4)
-        self.filename_button.grid(column=4, row=1, sticky=(N, E), padx=(0, 15), pady=(1, 1))
-        period_label.grid(column=0, row=2, sticky=(N, W), padx=10, columnspan=5)
-        self.period_spinbox.grid(column=0, row=3, sticky=(N, W), padx=15, pady=(1, 10), columnspan=2)
-        self.start_button.grid(column=0, row=4, sticky=(N, W), padx=(15, 1), pady=(1, 5), columnspan=2)
-        self.stop_button.grid(column=3, row=4, sticky=(N, W), padx=(1, 15), pady=(1, 5), columnspan=2)
+        self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=4)
+        filename_buttons.grid(column=0, row=2, padx=(0, 0), pady=(1, 1), columnspan=4)
+        self.filename_open_button.grid(column=0, row=0, sticky=(N, W), padx=(10, 17), pady=(1, 1), columnspan=2)
+        self.filename_save_button.grid(column=3, row=0, sticky=(N, W), padx=(17, 10), pady=(1, 1), columnspan=2)
+        period_label.grid(column=0, row=3, sticky=(N, W), padx=10, columnspan=5)
+        self.period_spinbox.grid(column=0, row=4, sticky=(N, W), padx=15, pady=(1, 10), columnspan=2)
+        self.start_button.grid(column=0, row=5, sticky=(N, W), padx=(15, 1), pady=(1, 5), columnspan=2)
+        self.stop_button.grid(column=3, row=5, sticky=(N, W), padx=(1, 15), pady=(1, 5), columnspan=2)
 
     def set_defaults(self):
         self.filename.set(DEFAULT_FILE_PATH / f'{date.today()}.txt')
@@ -52,7 +58,8 @@ class Layout:
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
         self.period_spinbox.config(state=DISABLED)
-        self.filename_button.config(state=DISABLED)
+        self.filename_open_button.config(state=DISABLED)
+        self.filename_save_button.config(state=DISABLED)
         self.start_button.config(state=DISABLED)
 
     def stop(self):
@@ -60,12 +67,17 @@ class Layout:
             self.thread.stop_thread = True
         self.filename_entry.config(state=NORMAL)
         self.period_spinbox.config(state=NORMAL)
-        self.filename_button.config(state=NORMAL)
+        self.filename_open_button.config(state=DISABLED)
+        self.filename_save_button.config(state=DISABLED)
         self.start_button.config(state=NORMAL)
         self.stop_button.config(state=DISABLED)
 
     def select_file(self):
         self.filename.set(fd.askopenfilename(filetypes=[('Text files', '.txt')]))
+        self.filename_entry.xview('end')
+
+    def save_file(self):
+        self.filename.set(fd.asksaveasfilename(filetypes=[('Text file', '.txt')], defaultextension='.txt'))
         self.filename_entry.xview('end')
 
     def filename_write_callback(self, *args):
