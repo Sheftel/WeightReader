@@ -21,8 +21,9 @@ def read_data(layout, serial, filename, period=1):
 
     now = 0
     while not getattr(thread, "stop_thread", False):
+        serial.flushInput()
         reading = serial.readline().decode() or 'Нет сигнала'
-        file.write(str(now) + ' - ' + reading + '\n')
+        file.write(str(now) + '   ' + reading.lstrip('-').lstrip(' ').rstrip('\n'))
         file.flush()
         now += period
         time.sleep(period)
