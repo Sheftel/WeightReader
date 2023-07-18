@@ -11,7 +11,7 @@ def read_data(layout, serial, filename, period=1):
     assumes that this method won't be called with filename = None
     """
     thread = current_thread()
-    serial.timeout = period
+    serial.timeout = 0.1
     try:
         os.makedirs(os.path.dirname(filename), exist_ok=True)
     except FileNotFoundError:
@@ -24,6 +24,7 @@ def read_data(layout, serial, filename, period=1):
         serial.flushInput()
         reading = serial.readline().decode() or 'Нет сигнала'
         file.write(str(now) + '   ' + reading.lstrip('-').lstrip(' ').rstrip('\n'))
+        layout.entries_made.set(layout.entries_made.get()+1)
         file.flush()
         now += period
         time.sleep(period)

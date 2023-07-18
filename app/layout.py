@@ -1,5 +1,5 @@
 from datetime import date
-from threading import Thread
+from threading import Thread, Timer
 from tkinter import *
 from tkinter import ttk, filedialog as fd
 
@@ -9,8 +9,11 @@ from reader import read_data
 
 class Layout:
     def __init__(self, root, serial_port):
+        self.root = root
         self.serial_port = serial_port
         self.thread = None
+        self.timer = Timer(1, self.set_time)
+        self.is_running = False
         range_validation = root.register(self.validate_period)
         mainframe = ttk.Frame(root, padding="5 5 5 5")
 
@@ -39,6 +42,14 @@ class Layout:
         self.start_button = ttk.Button(mainframe, text='Старт', command=self.start, width=20, state=DISABLED)
         self.stop_button = ttk.Button(mainframe, text='Стоп', command=self.stop, width=20, state=DISABLED)
 
+        info = ttk.Frame(mainframe)
+        self.time_elapsed = IntVar()
+        self.time_elapsed_label = ttk.Label(info, text='Прошло времени(сек.):')
+        self.time_elapsed_text = ttk.Entry(info, textvariable=self.time_elapsed, state='readonly', width=20)
+        self.entries_made = IntVar()
+        self.entries_made_label = ttk.Label(info, text='Записей сделано:')
+        self.entries_made_text = ttk.Entry(info, textvariable=self.entries_made, state='readonly', width=20)
+
         mainframe.grid(column=0, row=0)
         filename_label.grid(column=0, row=0, sticky=(N, W), padx=10, columnspan=5)
         self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=4)
@@ -47,14 +58,22 @@ class Layout:
         self.filename_save_button.grid(column=3, row=0, sticky=(N, W), padx=(17, 10), pady=(1, 1), columnspan=2)
         period_label.grid(column=0, row=3, sticky=(N, W), padx=10, columnspan=5)
         self.period_spinbox.grid(column=0, row=4, sticky=(N, W), padx=15, pady=(1, 10), columnspan=2)
-        self.start_button.grid(column=0, row=5, sticky=(N, W), padx=(15, 1), pady=(1, 5), columnspan=2)
-        self.stop_button.grid(column=3, row=5, sticky=(N, W), padx=(1, 15), pady=(1, 5), columnspan=2)
+        info.grid(column=0, row=5, padx=(0, 0), pady=(1, 1), columnspan=4)
+        self.time_elapsed_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 15), pady=(1, 1), columnspan=2)
+        self.entries_made_label.grid(column=3, row=0, sticky=(N, W), padx=(15, 10), pady=(1, 1), columnspan=2)
+        self.time_elapsed_text.grid(column=0, row=1, sticky=(N, W), padx=(10, 15), pady=(1, 1), columnspan=2)
+        self.entries_made_text.grid(column=3, row=1, sticky=(N, W), padx=(15, 10), pady=(1, 1), columnspan=2)
+        self.start_button.grid(column=0, row=6, sticky=(N, W), padx=(15, 1), pady=(1, 5), columnspan=2)
+        self.stop_button.grid(column=3, row=6, sticky=(N, W), padx=(1, 15), pady=(1, 5), columnspan=2)
 
     def set_defaults(self):
         self.filename.set(DEFAULT_FILE_PATH / f'{date.today()}.txt')
         self.period.set(DEFAULT_PERIOD)
 
     def start(self):
+        self.time_elapsed.set(0)
+        self.entries_made.set(0)
+        self.is_running = True
         self.thread = Thread(target=read_data, args=(self, self.serial_port, self.filename.get(), self.period.get()))
         self.thread.start()
         self.stop_button.config(state=NORMAL)
@@ -63,16 +82,23 @@ class Layout:
         self.filename_open_button.config(state=DISABLED)
         self.filename_save_button.config(state=DISABLED)
         self.start_button.config(state=DISABLED)
+        self.root.after(1000, self.set_time)
 
     def stop(self):
         if self.thread:
             self.thread.stop_thread = True
+            self.is_running = False
         self.filename_entry.config(state=NORMAL)
         self.period_spinbox.config(state=NORMAL)
         self.filename_open_button.config(state=NORMAL)
         self.filename_save_button.config(state=NORMAL)
         self.start_button.config(state=NORMAL)
         self.stop_button.config(state=DISABLED)
+
+    def set_time(self):
+        self.time_elapsed.set(self.time_elapsed.get() + 1)
+        if self.is_running:
+            self.root.after(1000, self.set_time)
 
     def select_file(self):
         self.filename.set(fd.askopenfilename(filetypes=[('Text files', '.txt')]))
