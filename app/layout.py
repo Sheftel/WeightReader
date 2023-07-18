@@ -11,7 +11,7 @@ class Layout:
     def __init__(self, root, serial_port):
         self.serial_port = serial_port
         self.thread = None
-
+        range_validation = root.register(self.validate_period)
         mainframe = ttk.Frame(root, padding="5 5 5 5")
 
         self.filename = StringVar()
@@ -30,6 +30,8 @@ class Layout:
         period_label = ttk.Label(mainframe, text='Период записи(сек.):')
         self.period_spinbox = ttk.Spinbox(mainframe,
                                           textvariable=self.period,
+                                          validate='key',
+                                          validatecommand=(range_validation, '%P'),
                                           from_=MIN_PERIOD,
                                           to=MAX_PERIOD,
                                           increment=1)
@@ -67,8 +69,8 @@ class Layout:
             self.thread.stop_thread = True
         self.filename_entry.config(state=NORMAL)
         self.period_spinbox.config(state=NORMAL)
-        self.filename_open_button.config(state=DISABLED)
-        self.filename_save_button.config(state=DISABLED)
+        self.filename_open_button.config(state=NORMAL)
+        self.filename_save_button.config(state=NORMAL)
         self.start_button.config(state=NORMAL)
         self.stop_button.config(state=DISABLED)
 
@@ -88,17 +90,24 @@ class Layout:
 
     def period_write_callback(self, *args):
         period = self.period.get()
+
         if not isinstance(period, int):
             return self.period.set(DEFAULT_PERIOD)
-        if period > MAX_PERIOD:
-            return self.period.set(MAX_PERIOD)
-        if period < MIN_PERIOD:
-            return self.period.set(MIN_PERIOD)
+        if period > MAX_PERIOD or period < MIN_PERIOD:
+            return self.start_button.config(state=DISABLED)
+        self.start_button.config(state=NORMAL)
+
+    def validate_period(self, user_input):
+        self.start_button.config(state=DISABLED)
+        if user_input.isdigit() or user_input == '':
+            return True
+        return False
 
     def reset_layout(self):
         self.filename_entry.config(state=NORMAL)
         self.period_spinbox.config(state=NORMAL)
-        self.filename_button.config(state=NORMAL)
+        self.filename_open_button.config(state=NORMAL)
+        self.filename_save_button.config(state=NORMAL)
         self.start_button.config(state=DISABLED)
         self.stop_button.config(state=DISABLED)
 
