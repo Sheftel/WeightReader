@@ -20,7 +20,8 @@ class App:
                 baudrate=SERIAL_BAUDRATE,
                 bytesize=SERIAL_BITESIZE,
                 parity=SERIAL_PARITY,
-                stopbits=SERIAL_STOPBITS
+                stopbits=SERIAL_STOPBITS,
+                timeout=SERIAL_TIMEOUT
             )
         except SerialException:
             raise_error(message='Невозможно подключиться к порту по указанным данным.')

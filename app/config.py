@@ -8,6 +8,7 @@ __all__ = [
     'SERIAL_BITESIZE',
     'SERIAL_PARITY',
     'SERIAL_STOPBITS',
+    'SERIAL_TIMEOUT',
     'DEFAULT_FILE_PATH',
     'DEFAULT_PERIOD',
     'MAX_PERIOD',
@@ -29,7 +30,7 @@ SERIAL_BAUDRATE = serial.getint('SERIAL_BAUDRATE', 9600)
 SERIAL_BITESIZE = serial.getint('SERIAL_BITESIZE', 8)
 SERIAL_PARITY = serial.get('SERIAL_PARITY', 'N')
 SERIAL_STOPBITS = serial.getint('SERIAL_STOPBITS', 1)
-
+SERIAL_TIMEOUT = serial.getint('SERIAL_TIMEOUT', 1)
 
 output = config['OUTPUT_FILE']
 DEFAULT_FILE_PATH = output.get('DEFAULT_PATH', Path.home()/'weights')
