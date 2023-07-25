@@ -9,9 +9,9 @@ __all__ = [
     'SERIAL_PARITY',
     'SERIAL_STOPBITS',
     'DEFAULT_FILE_PATH',
-    'DEFAULT_PERIOD',
-    'MAX_PERIOD',
-    'MIN_PERIOD',
+    'DEFAULT_INTERVAL',
+    'MAX_INTERVAL',
+    'MIN_INTERVAL',
     'STATIC_PATH'
 ]
 
@@ -35,6 +35,6 @@ output = config['OUTPUT_FILE']
 DEFAULT_FILE_PATH = output.get('DEFAULT_PATH', Path.home()/'weights')
 
 period = config['READ_PERIOD']
-DEFAULT_PERIOD = period.getint('DEFAULT_PERIOD', 30)
-MIN_PERIOD = period.getint('MIN_PERIOD', 1) if period.getint('MIN_PERIOD', 1) >=1 else 1
-MAX_PERIOD = period.getint('MAX_PERIOD', 7200)
+DEFAULT_INTERVAL = period.getint('DEFAULT_INTERVAL', 30)
+MIN_INTERVAL = period.getint('MIN_INTERVAL', 1) if period.getint('MIN_INTERVAL', 1) >= 1 else 1
+MAX_INTERVAL = period.getint('MAX_INTERVAL', 7200)
