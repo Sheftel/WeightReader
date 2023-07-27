@@ -32,7 +32,7 @@ def read_data(layout, serial, calculation_data, filename, period=1, runtime=None
 def read_action(file, serial, layout, now, calculation_data,  last_reading=0):
     serial.flushInput()
     reading = serial.readline().decode() or f'0.00  g'
-    reading = float(reading.rstrip('g').lstrip('-').lstrip(' ').strip(' ').rstrip('\r\n'))
+    reading = float(reading.lstrip('-').lstrip(' ').rstrip('\r\n').rstrip('g').strip(' '))
     mass, mass_difference, permeability = calculate(reading, calculation_data, last_reading=last_reading)
     file.write(f"{now}  {mass:.2f}  g  {mass_difference:.2f}  {permeability:.1f}  \r")
     layout.entries_made.set(layout.entries_made.get() + 1)
