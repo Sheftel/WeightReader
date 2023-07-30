@@ -1,7 +1,7 @@
 import math
 
 from datetime import date
-from threading import Thread, Timer
+from threading import Thread
 from tkinter import *
 from tkinter import ttk, filedialog as fd
 from serial import Serial, SerialException
@@ -16,7 +16,6 @@ class Layout:
         self.root = root
         self.thread = None
         self.serial = None
-        self.timer = Timer(1, self.set_time)
         self.is_running = False
         self.runtime_seconds = None
         range_validation = root.register(self.validate_range)
@@ -148,7 +147,6 @@ class Layout:
         self.serial_settings()
 
     def set_time(self):
-        self.time_elapsed.set(self.time_elapsed.get() + 1)
         if self.is_running:
             if self.runtime_seconds and self.runtime_seconds <= self.time_elapsed.get():
                 self.stop()
@@ -198,8 +196,11 @@ class Layout:
         }
         self.time_elapsed.set(0)
         self.entries_made.set(0)
+        self.runtime_seconds = self.runtime.get() * 60
         self.is_running = True
-        self.thread = Thread(target=read_data, args=(self, self.serial, calculation_data, self.filename.get(), self.interval.get()))
+        self.thread = Thread(target=read_data,
+                             args=(self, self.serial, calculation_data, self.filename.get(),
+                                   self.interval.get(), self.runtime_seconds))
         self.thread.start()
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
@@ -212,7 +213,6 @@ class Layout:
         self.filename_open_button.config(state=DISABLED)
         self.filename_save_button.config(state=DISABLED)
         self.start_button.config(state=DISABLED)
-        self.runtime_seconds = self.runtime.get() * 60
         self.root.after(1000, self.set_time)
 
     def stop(self):
