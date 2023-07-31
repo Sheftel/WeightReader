@@ -38,8 +38,8 @@ def read_data(layout, serial, calculation_data, filename, period=1, runtime=None
 
 def get_reading(serial):
     serial.flushInput()
-    reading = serial.readline().decode() or f'0.00  g'
-    reading = float(reading.lstrip('-').lstrip(' ').rstrip('\r\n').rstrip('g').strip(' '))
+    reading = serial.readline().decode() or f'-  0.00  g  \r\n'
+    reading = float(reading.lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').strip(' '))
     return reading
 
 
