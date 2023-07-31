@@ -196,7 +196,8 @@ class Layout:
         }
         self.time_elapsed.set(0)
         self.entries_made.set(0)
-        self.runtime_seconds = self.runtime.get() * 60
+        self.runtime_seconds = self.runtime.get() * 60 if self.runtime.get() > 0 else None
+
         self.is_running = True
         self.thread = Thread(target=read_data,
                              args=(self, self.serial, calculation_data, self.filename.get(),

@@ -30,7 +30,7 @@ def read_data(layout, serial, calculation_data, filename, period=1, runtime=None
             last_reading = reading
         time_elapsed += 1
         elapsed = time.time() - start
-        time.sleep(1. - elapsed)
+        time.sleep(1. - min(1., elapsed))
     file.write('\n')
     file.close()
     layout.stop()
