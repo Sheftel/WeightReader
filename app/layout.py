@@ -8,7 +8,7 @@ from serial import Serial, SerialException
 
 from config import *
 from utils import raise_error, xview_event_handler
-from reader import read_data
+from reader import Reader
 
 
 class Layout:
@@ -23,8 +23,9 @@ class Layout:
         # frames
         mainframe = ttk.Frame(root, padding="5 5 5 5")
         app_params = ttk.Frame(mainframe)
-        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=280)
-        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=280)
+        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=270, height=420)
+        output = ttk.LabelFrame(mainframe, text='Вывод', width=270, height=420)
+        flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=240, height=50)
         run_buttons = ttk.Frame(mainframe)
 
         mainframe.grid(column=0, row=0)
@@ -59,9 +60,11 @@ class Layout:
         self.interval.trace_add("write", self.interval_write_callback)
         self.diameter = DoubleVar(value=19)
         self.density = DoubleVar(value=997.1)
+        self.diff_percent = DoubleVar(value=5)
+        self.flow_dimension = IntVar(value=1)
         self.runtime = IntVar()
 
-        spinbox_width = 28
+        spinbox_width = 27
 
         difference_label = ttk.Label(run_params, text='Разность давлений(бар):')
         self.difference_spinbox = ttk.Spinbox(run_params,
@@ -102,7 +105,18 @@ class Layout:
                                            from_=0,
                                            to=1000,
                                            increment=1)
-
+        diff_percent_label = ttk.Label(run_params, text='Процент уменьшения массы\nдля интерполяции')
+        self.diff_percent_spinbox = ttk.Spinbox(run_params,
+                                                width=spinbox_width,
+                                                textvariable=self.diff_percent,
+                                                validate='key',
+                                                validatecommand=(range_validation, '%P'),
+                                                from_=0.01,
+                                                to=100,
+                                                increment=1)
+        #   flow_dimension_label = ttk.Label(run_params, text='Размерность потока')
+        self.flow_dimension_radio_one = ttk.Radiobutton(flow_dimension_frame, text='л/м^2час', variable=self.flow_dimension, value=1)
+        self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м^3/м^2час', variable=self.flow_dimension, value=1000)
         runtime_label = ttk.Label(run_params, text='Время эксперимента(минут):')
         self.runtime_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
@@ -121,8 +135,18 @@ class Layout:
         self.diameter_spinbox.grid(column=0, row=5, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         density_label.grid(column=0, row=6, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.density_spinbox.grid(column=0, row=7, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        runtime_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.runtime_spinbox.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        diff_percent_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.diff_percent_spinbox.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        flow_dimension_frame.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+
+        # flow_dimension
+        flow_dimension_frame.grid_propagate(FALSE)
+
+        self.flow_dimension_radio_one.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.flow_dimension_radio_thousand.grid(column=2, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+
+        runtime_label.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.runtime_spinbox.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
 
         # output
         output.grid_propagate(FALSE)
@@ -191,22 +215,24 @@ class Layout:
             'diameter': self.diameter.get(),
             'interval': self.interval.get(),
             'density': self.density.get(),
-            'surface': (math.pi * math.pow(self.diameter.get()/1000, 2))/4
-
+            'surface': (math.pi * math.pow(self.diameter.get()/1000, 2))/4,
+            'percent': self.diff_percent.get(),
+            'flow_dimension': self.flow_dimension.get()
         }
         self.time_elapsed.set(0)
         self.entries_made.set(0)
         self.runtime_seconds = self.runtime.get() * 60 if self.runtime.get() > 0 else None
 
         self.is_running = True
-        self.thread = Thread(target=read_data,
-                             args=(self, self.serial, calculation_data, self.filename.get(),
+        self.thread = Thread(target=Reader.read_data,
+                             args=(Reader(), self, self.serial, calculation_data, self.filename.get(),
                                    self.interval.get(), self.runtime_seconds))
         self.thread.start()
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
         self.settings_button.config(state=DISABLED)
         self.difference_spinbox.config(state=DISABLED)
+        self.diff_percent_spinbox.config(state=DISABLED)
         self.interval_spinbox.config(state=DISABLED)
         self.density_spinbox.config(state=DISABLED)
         self.diameter_spinbox.config(state=DISABLED)
@@ -223,6 +249,7 @@ class Layout:
         self.filename_entry.config(state=NORMAL)
         self.settings_button.config(state=NORMAL)
         self.difference_spinbox.config(state=NORMAL)
+        self.diff_percent_spinbox.config(state=NORMAL)
         self.interval_spinbox.config(state=NORMAL)
         self.density_spinbox.config(state=NORMAL)
         self.diameter_spinbox.config(state=NORMAL)
