@@ -23,9 +23,9 @@ class Layout:
         # frames
         mainframe = ttk.Frame(root, padding="5 5 5 5")
         app_params = ttk.Frame(mainframe)
-        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=270, height=420)
-        output = ttk.LabelFrame(mainframe, text='Вывод', width=270, height=420)
-        flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=240, height=50)
+        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=400)
+        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=400)
+        flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=180, height=50)
         run_buttons = ttk.Frame(mainframe)
 
         mainframe.grid(column=0, row=0)
@@ -49,8 +49,9 @@ class Layout:
         filename_label.grid(column=0, row=0, sticky=(N, W), padx=10, columnspan=5)
         self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(5, 5), pady=(3, 1), columnspan=2)
         filename_buttons.grid(column=2, row=1, padx=(0, 0), pady=(1, 1), columnspan=2)
-        self.filename_open_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
-        self.filename_save_button.grid(column=2, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
+        self.filename_save_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)        
+        self.filename_open_button.grid(column=2, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
+      
         self.settings_button.grid(column=0, row=2, padx=(3, 0), pady=(1, 1), columnspan=5)
 
         # run params
@@ -66,7 +67,7 @@ class Layout:
 
         spinbox_width = 27
 
-        difference_label = ttk.Label(run_params, text='Разность давлений(бар):')
+        difference_label = ttk.Label(run_params, text='Разность давлений (бар):')
         self.difference_spinbox = ttk.Spinbox(run_params,
                                               width=spinbox_width,
                                               textvariable=self.difference,
@@ -76,7 +77,7 @@ class Layout:
                                               to=1000,
                                               increment=1)
 
-        interval_label = ttk.Label(run_params, text='Интервал записи(секунд):')
+        interval_label = ttk.Label(run_params, text='Интервал записи (секунд):')
         self.interval_spinbox = ttk.Spinbox(run_params,
                                             width=spinbox_width,
                                             textvariable=self.interval,
@@ -86,7 +87,7 @@ class Layout:
                                             to=MAX_INTERVAL,
                                             increment=1)
 
-        diameter_label = ttk.Label(run_params, text='Диаметр рабочей поверхности\nмембраны(мм):')
+        diameter_label = ttk.Label(run_params, text='Диаметр рабочей поверхности\nмембраны (мм):')
         self.diameter_spinbox = ttk.Spinbox(run_params,
                                             width=spinbox_width,
                                             textvariable=self.diameter,
@@ -96,7 +97,7 @@ class Layout:
                                             to=1000,
                                             increment=1)
 
-        density_label = ttk.Label(run_params, text='Плотность воды при\nкомнатной температуре(кг/м 3):')
+        density_label = ttk.Label(run_params, text='Плотность воды при\nкомнатной температуре (кг/м3):')
         self.density_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
                                            textvariable=self.density,
@@ -115,8 +116,8 @@ class Layout:
                                                 to=100,
                                                 increment=1)
         #   flow_dimension_label = ttk.Label(run_params, text='Размерность потока')
-        self.flow_dimension_radio_one = ttk.Radiobutton(flow_dimension_frame, text='л/м^2час', variable=self.flow_dimension, value=1)
-        self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м^3/м^2час', variable=self.flow_dimension, value=1000)
+        self.flow_dimension_radio_one = ttk.Radiobutton(flow_dimension_frame, text='л/м2 час', variable=self.flow_dimension, value=1)
+        self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м3/м2 час', variable=self.flow_dimension, value=1000)
         runtime_label = ttk.Label(run_params, text='Время эксперимента(минут):')
         self.runtime_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
@@ -137,16 +138,16 @@ class Layout:
         self.density_spinbox.grid(column=0, row=7, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         diff_percent_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.diff_percent_spinbox.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        flow_dimension_frame.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        flow_dimension_frame.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1))
 
         # flow_dimension
         flow_dimension_frame.grid_propagate(FALSE)
 
-        self.flow_dimension_radio_one.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.flow_dimension_radio_thousand.grid(column=2, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.flow_dimension_radio_one.grid(column=0, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=2)
+        self.flow_dimension_radio_thousand.grid(column=2, row=0, sticky=(N, W), padx=(5, 10), pady=(1, 1), columnspan=2)
 
-        runtime_label.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.runtime_spinbox.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        runtime_label.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.runtime_spinbox.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
 
         # output
         output.grid_propagate(FALSE)
@@ -163,7 +164,7 @@ class Layout:
         self.entries_made_text.grid(column=0, row=3, sticky=(N, W), padx=(10, 10), pady=(1, 5), columnspan=2)
 
         # run buttons
-        self.start_button = ttk.Button(run_buttons, text='Старт', command=self.start, width=34, state=DISABLED)
+        self.start_button = ttk.Button(run_buttons, text='Старт', command=self.start, width=34, state=NORMAL)
         self.stop_button = ttk.Button(run_buttons, text='Стоп', command=self.stop, width=34, state=DISABLED)
         self.start_button.grid(column=0, row=0, sticky=(N, W), padx=(3, 12), pady=(1, 5), columnspan=2)
         self.stop_button.grid(column=3, row=0, sticky=(N, W), padx=(14, 2), pady=(1, 5), columnspan=2)
@@ -232,6 +233,8 @@ class Layout:
         self.filename_entry.config(state='readonly')
         self.settings_button.config(state=DISABLED)
         self.difference_spinbox.config(state=DISABLED)
+        self.flow_dimension_radio_one.config(state=DISABLED)
+        self.flow_dimension_radio_thousand.config(state=DISABLED)
         self.diff_percent_spinbox.config(state=DISABLED)
         self.interval_spinbox.config(state=DISABLED)
         self.density_spinbox.config(state=DISABLED)
@@ -249,6 +252,8 @@ class Layout:
         self.filename_entry.config(state=NORMAL)
         self.settings_button.config(state=NORMAL)
         self.difference_spinbox.config(state=NORMAL)
+        self.flow_dimension_radio_one.config(state=NORMAL)
+        self.flow_dimension_radio_thousand.config(state=NORMAL)
         self.diff_percent_spinbox.config(state=NORMAL)
         self.interval_spinbox.config(state=NORMAL)
         self.density_spinbox.config(state=NORMAL)

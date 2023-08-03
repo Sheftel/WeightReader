@@ -22,6 +22,7 @@ class Reader:
             raise_error(message="Ошибка в пути к файлу.")
             return layout.reset_layout()
         file = open(filename, "a+")
+        file.write(f"Время, с  Масса, г   Разность масс, г   Поток, {'л/м2 час' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час'}  Проницаемость, {'л/м2 час бар' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час бар'}\n")
         last_reading = 0
         time_elapsed = layout.time_elapsed.get()
         while not getattr(thread, "stop_thread", False) and (runtime is None or time_elapsed <= runtime):
@@ -51,7 +52,7 @@ class Reader:
         return reading
 
     def validate_reading(self, reading, last_reading, calculation_data):
-        diff = reading - last_reading
+        diff = reading - last_reading if not self.interpolation_data else reading-self.interpolation_data['reading']
         if diff < 0 and abs(diff / last_reading) * 100 > calculation_data['percent']:
             return False
         return True
@@ -68,7 +69,7 @@ class Reader:
                                                       prev_diff=self.last_read['mass_difference'],
                                                       next_diff=mass_difference)
             file.write(
-                f"{self.interpolation_data['time']}  {inter_mass:.2f}  g  {inter_diff:.2f}  {inter_flow:.2f}  {inter_perm:.1f}  \r")
+                f"{self.interpolation_data['time']}  {inter_mass:.2f}  {inter_diff:.2f}  {inter_flow:.2f}  {inter_perm:.1f}  \r")
             file.flush()
             layout.entries_made.set(layout.entries_made.get() + 1)
             self.interpolation_data = None
@@ -82,7 +83,7 @@ class Reader:
             'flow': flow,
             'permeability': permeability
         }
-        file.write(f"{now}  {mass:.2f}  g  {mass_difference:.2f}  {flow:.2f}  {permeability:.1f}  \r")
+        file.write(f"{now}  {mass:.2f}  {mass_difference:.2f}  {flow:.2f}  {permeability:.1f}  \r")
         file.flush()
         layout.entries_made.set(layout.entries_made.get() + 1)
 
