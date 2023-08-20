@@ -23,8 +23,8 @@ class Layout:
         # frames
         mainframe = ttk.Frame(root, padding="5 5 5 5")
         app_params = ttk.Frame(mainframe)
-        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=400)
-        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=400)
+        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=450)
+        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=450)
         flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=180, height=50)
         run_buttons = ttk.Frame(mainframe)
 
@@ -49,9 +49,9 @@ class Layout:
         filename_label.grid(column=0, row=0, sticky=(N, W), padx=10, columnspan=5)
         self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(5, 5), pady=(3, 1), columnspan=2)
         filename_buttons.grid(column=2, row=1, padx=(0, 0), pady=(1, 1), columnspan=2)
-        self.filename_save_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)        
+        self.filename_save_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
         self.filename_open_button.grid(column=2, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
-      
+
         self.settings_button.grid(column=0, row=2, padx=(3, 0), pady=(1, 1), columnspan=5)
 
         # run params
@@ -64,7 +64,7 @@ class Layout:
         self.diff_percent = DoubleVar(value=5)
         self.flow_dimension = IntVar(value=1)
         self.runtime = IntVar()
-
+        self.digits_after_dec = IntVar(value=2)
         spinbox_width = 27
 
         difference_label = ttk.Label(run_params, text='Разность давлений (бар):')
@@ -116,8 +116,10 @@ class Layout:
                                                 to=100,
                                                 increment=1)
         #   flow_dimension_label = ttk.Label(run_params, text='Размерность потока')
-        self.flow_dimension_radio_one = ttk.Radiobutton(flow_dimension_frame, text='л/м2 час', variable=self.flow_dimension, value=1)
-        self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м3/м2 час', variable=self.flow_dimension, value=1000)
+        self.flow_dimension_radio_one = ttk.Radiobutton(flow_dimension_frame, text='л/м2 час',
+                                                        variable=self.flow_dimension, value=1)
+        self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м3/м2 час',
+                                                             variable=self.flow_dimension, value=1000)
         runtime_label = ttk.Label(run_params, text='Время эксперимента(минут):')
         self.runtime_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
@@ -127,6 +129,15 @@ class Layout:
                                            from_=0,
                                            to=1000,
                                            increment=1)
+        digits_after_dec_label = ttk.Label(run_params, text='Количество символов после\nзапятой:')
+        self.digits_after_dec_spinbox = ttk.Spinbox(run_params,
+                                                    width=spinbox_width,
+                                                    textvariable=self.digits_after_dec,
+                                                    validate='key',
+                                                    validatecommand=(range_validation, '%P'),
+                                                    from_=1,
+                                                    to=6,
+                                                    increment=1)
 
         difference_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.difference_spinbox.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
@@ -138,7 +149,11 @@ class Layout:
         self.density_spinbox.grid(column=0, row=7, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         diff_percent_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.diff_percent_spinbox.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        flow_dimension_frame.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        runtime_label.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.runtime_spinbox.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        digits_after_dec_label.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        self.digits_after_dec_spinbox.grid(column=0, row=13, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+        flow_dimension_frame.grid(column=0, row=14, sticky=(N, W), padx=(10, 10), pady=(1, 1))
 
         # flow_dimension
         flow_dimension_frame.grid_propagate(FALSE)
@@ -146,8 +161,7 @@ class Layout:
         self.flow_dimension_radio_one.grid(column=0, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=2)
         self.flow_dimension_radio_thousand.grid(column=2, row=0, sticky=(N, W), padx=(5, 10), pady=(1, 1), columnspan=2)
 
-        runtime_label.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.runtime_spinbox.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
+
 
         # output
         output.grid_propagate(FALSE)
@@ -170,13 +184,6 @@ class Layout:
         self.stop_button.grid(column=3, row=0, sticky=(N, W), padx=(14, 2), pady=(1, 5), columnspan=2)
 
         self.serial_settings()
-
-    def set_time(self):
-        if self.is_running:
-            if self.runtime_seconds and self.runtime_seconds <= self.time_elapsed.get():
-                self.stop()
-            else:
-                self.root.after(1000, self.set_time)
 
     def select_file(self):
         self.filename.set(fd.askopenfilename(filetypes=[('Text files', '.txt')]))
@@ -216,18 +223,17 @@ class Layout:
             'diameter': self.diameter.get(),
             'interval': self.interval.get(),
             'density': self.density.get(),
-            'surface': (math.pi * math.pow(self.diameter.get()/1000, 2))/4,
+            'surface': (math.pi * math.pow(self.diameter.get() / 1000, 2)) / 4,
             'percent': self.diff_percent.get(),
             'flow_dimension': self.flow_dimension.get()
         }
         self.time_elapsed.set(0)
         self.entries_made.set(0)
         self.runtime_seconds = self.runtime.get() * 60 if self.runtime.get() > 0 else None
-
         self.is_running = True
         self.thread = Thread(target=Reader.read_data,
                              args=(Reader(), self, self.serial, calculation_data, self.filename.get(),
-                                   self.interval.get(), self.runtime_seconds))
+                                   self.interval.get(), self.runtime_seconds, self.digits_after_dec.get()))
         self.thread.start()
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
@@ -240,10 +246,10 @@ class Layout:
         self.density_spinbox.config(state=DISABLED)
         self.diameter_spinbox.config(state=DISABLED)
         self.runtime_spinbox.config(state=DISABLED)
+        self.digits_after_dec_spinbox.config(state=DISABLED)
         self.filename_open_button.config(state=DISABLED)
         self.filename_save_button.config(state=DISABLED)
         self.start_button.config(state=DISABLED)
-        self.root.after(1000, self.set_time)
 
     def stop(self):
         if self.thread:
@@ -259,6 +265,7 @@ class Layout:
         self.density_spinbox.config(state=NORMAL)
         self.diameter_spinbox.config(state=NORMAL)
         self.runtime_spinbox.config(state=NORMAL)
+        self.digits_after_dec_spinbox.config(state=NORMAL)
         self.filename_open_button.config(state=NORMAL)
         self.filename_save_button.config(state=NORMAL)
         self.start_button.config(state=NORMAL)

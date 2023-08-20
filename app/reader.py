@@ -9,7 +9,7 @@ class Reader:
     interpolation_data = None
     last_read = {}
 
-    def read_data(self, layout, serial, calculation_data, filename, period=1, runtime=None):
+    def read_data(self, layout, serial, calculation_data, filename, period=1, runtime=None, digits_after_dec=2):
         """
         writes data read from serial port to given file.
         assumes that this method won't be called with filename = None
@@ -32,7 +32,7 @@ class Reader:
                 reading = self.get_reading(serial)
                 if self.validate_reading(reading, last_reading, calculation_data):
                     Thread(target=self.handle,
-                           args=(file, layout, time_elapsed, reading, calculation_data, last_reading)).start()
+                           args=(file, layout, time_elapsed, reading, calculation_data, last_reading, digits_after_dec)).start()
                     last_reading = reading
                 else:
                     self.interpolation_data = {'reading': reading,
@@ -57,7 +57,7 @@ class Reader:
             return False
         return True
 
-    def handle(self, file, layout, now, reading, calculation_data, last_reading=None):
+    def handle(self, file, layout, now, reading, calculation_data, last_reading=None, digits_after_dec=2):
         if self.interpolation_data:
             mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
                                                                                last_reading=self.interpolation_data[
@@ -69,7 +69,7 @@ class Reader:
                                                       prev_diff=self.last_read['mass_difference'],
                                                       next_diff=mass_difference)
             file.write(
-                f"{self.interpolation_data['time']}  {inter_mass:.2f}  {inter_diff:.2f}  {inter_flow:.2f}  {inter_perm:.1f}  \r")
+                f"{self.interpolation_data['time']}  {inter_mass:.{digits_after_dec}f}  {inter_diff:.{digits_after_dec}f}  {inter_flow:.{digits_after_dec}f}  {inter_perm:.{digits_after_dec}f}  \r")
             file.flush()
             layout.entries_made.set(layout.entries_made.get() + 1)
             self.interpolation_data = None
@@ -83,7 +83,7 @@ class Reader:
             'flow': flow,
             'permeability': permeability
         }
-        file.write(f"{now}  {mass:.2f}  {mass_difference:.2f}  {flow:.2f}  {permeability:.1f}  \r")
+        file.write(f"{now}  {mass:.{digits_after_dec}f}  {mass_difference:.{digits_after_dec}f}  {flow:.{digits_after_dec}f}  {permeability:.{digits_after_dec}f}  \r")
         file.flush()
         layout.entries_made.set(layout.entries_made.get() + 1)
 
