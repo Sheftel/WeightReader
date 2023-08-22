@@ -235,7 +235,8 @@ class Layout:
         self.is_running = True
         self.thread = Thread(target=Reader.read_data,
                              args=(Reader(), self, self.serial, calculation_data, self.filename.get(),
-                                   self.interval.get(), self.runtime_seconds, self.digits_after_dec.get(), self.logging))
+                                   self.interval.get(), self.runtime_seconds, self.digits_after_dec.get(),
+                                   self.logging.get()))
         self.thread.start()
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
