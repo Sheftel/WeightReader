@@ -24,7 +24,7 @@ class Reader:
             raise_error(message="Ошибка в пути к файлу.")
             return layout.reset_layout()
         if logging:
-            log_file = open(ROOT_PATH/f'log_{datetime.date.today()}', "a+")
+            log_file = open(ROOT_PATH/f'log_{datetime.date.today()}_{serial.port}', "a+")
             log_file.write('\n[LOG START]\n')
             serial.flushInput()
         file = open(filename, "a+")

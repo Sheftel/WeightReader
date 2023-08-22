@@ -56,13 +56,13 @@ class Layout:
 
         # run params
         run_params.grid_propagate(FALSE)
-        self.difference = DoubleVar(value=4)
-        self.interval = IntVar(value=DEFAULT_INTERVAL)
+        self.difference = DoubleVar(value=1)
+        self.interval = IntVar(value=60)
         self.interval.trace_add("write", self.interval_write_callback)
         self.diameter = DoubleVar(value=19)
         self.density = DoubleVar(value=997.1)
         self.diff_percent = DoubleVar(value=5)
-        self.flow_dimension = IntVar(value=1)
+        self.flow_dimension = IntVar(value=1000)
         self.runtime = IntVar()
         self.digits_after_dec = IntVar(value=3)
         self.logging = BooleanVar(value=False)
