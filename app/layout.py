@@ -23,8 +23,8 @@ class Layout:
         # frames
         mainframe = ttk.Frame(root, padding="5 5 5 5")
         app_params = ttk.Frame(mainframe)
-        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=450)
-        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=450)
+        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=500)
+        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=500)
         flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=180, height=50)
         run_buttons = ttk.Frame(mainframe)
 
@@ -64,7 +64,9 @@ class Layout:
         self.diff_percent = DoubleVar(value=5)
         self.flow_dimension = IntVar(value=1)
         self.runtime = IntVar()
-        self.digits_after_dec = IntVar(value=2)
+        self.digits_after_dec = IntVar(value=3)
+        self.logging = BooleanVar(value=False)
+
         spinbox_width = 27
 
         difference_label = ttk.Label(run_params, text='Разность давлений (бар):')
@@ -138,6 +140,7 @@ class Layout:
                                                     from_=1,
                                                     to=6,
                                                     increment=1)
+        self.log_checkbox = ttk.Checkbutton(run_params, variable=self.logging, text='Вести лог данных с весов:')
 
         difference_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.difference_spinbox.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
@@ -154,13 +157,12 @@ class Layout:
         digits_after_dec_label.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.digits_after_dec_spinbox.grid(column=0, row=13, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         flow_dimension_frame.grid(column=0, row=14, sticky=(N, W), padx=(10, 10), pady=(1, 1))
-
+        self.log_checkbox.grid(column=0, row=15,sticky=(N, W), padx=(10, 10), pady=(1, 1))
         # flow_dimension
         flow_dimension_frame.grid_propagate(FALSE)
 
         self.flow_dimension_radio_one.grid(column=0, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=2)
         self.flow_dimension_radio_thousand.grid(column=2, row=0, sticky=(N, W), padx=(5, 10), pady=(1, 1), columnspan=2)
-
 
 
         # output
@@ -233,7 +235,7 @@ class Layout:
         self.is_running = True
         self.thread = Thread(target=Reader.read_data,
                              args=(Reader(), self, self.serial, calculation_data, self.filename.get(),
-                                   self.interval.get(), self.runtime_seconds, self.digits_after_dec.get()))
+                                   self.interval.get(), self.runtime_seconds, self.digits_after_dec.get(), self.logging))
         self.thread.start()
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
@@ -249,6 +251,7 @@ class Layout:
         self.digits_after_dec_spinbox.config(state=DISABLED)
         self.filename_open_button.config(state=DISABLED)
         self.filename_save_button.config(state=DISABLED)
+        self.log_checkbox.config(state=DISABLED)
         self.start_button.config(state=DISABLED)
 
     def stop(self):
@@ -268,6 +271,7 @@ class Layout:
         self.digits_after_dec_spinbox.config(state=NORMAL)
         self.filename_open_button.config(state=NORMAL)
         self.filename_save_button.config(state=NORMAL)
+        self.log_checkbox.config(state=NORMAL)
         self.start_button.config(state=NORMAL)
         self.stop_button.config(state=DISABLED)
 

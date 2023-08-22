@@ -8,7 +8,7 @@ class App:
     def __init__(self):
         self.tk_root = Tk()
         self.tk_root.title(APP_TITLE)
-        self.tk_root.iconbitmap(STATIC_PATH / "icon.ico")
+#        self.tk_root.iconbitmap(STATIC_PATH / "icon.ico")
         self.tk_root.resizable(FALSE, FALSE)
 
         self.tk_root.protocol("WM_DELETE_WINDOW", self.on_closing)

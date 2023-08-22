@@ -1,7 +1,9 @@
+import datetime
 import os
 import time
 from threading import current_thread, Thread
 
+from config import ROOT_PATH
 from utils import raise_error
 
 
@@ -9,7 +11,7 @@ class Reader:
     interpolation_data = None
     last_read = {}
 
-    def read_data(self, layout, serial, calculation_data, filename, period=1, runtime=None, digits_after_dec=2):
+    def read_data(self, layout, serial, calculation_data, filename, period=1, runtime=None, digits_after_dec=3, logging=False):
         """
         writes data read from serial port to given file.
         assumes that this method won't be called with filename = None
@@ -21,6 +23,10 @@ class Reader:
         except FileNotFoundError:
             raise_error(message="Ошибка в пути к файлу.")
             return layout.reset_layout()
+        if logging:
+            log_file = open(ROOT_PATH/f'log_{datetime.date.today()}', "a+")
+            log_file.write('\n[LOG START]\n')
+            serial.flushInput()
         file = open(filename, "a+")
         file.write(f"Время, с  Масса, г   Разность масс, г   Поток, {'л/м2 час' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час'}  Проницаемость, {'л/м2 час бар' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час бар'}\n")
         last_reading = 0
@@ -29,6 +35,9 @@ class Reader:
             start = time.time()
             layout.time_elapsed.set(time_elapsed)
             if time_elapsed % period == 0:
+                if logging:
+                    log_file.write(serial.read_all().decode())
+                    log_file.flush()
                 reading = self.get_reading(serial)
                 if self.validate_reading(reading, last_reading, calculation_data):
                     Thread(target=self.handle,
@@ -43,12 +52,16 @@ class Reader:
         time.sleep(1.)
         file.write('\n')
         file.close()
+        if logging:
+            log_file.write('\n[LOG END]\n')
+            log_file.close()
         layout.stop()
 
     def get_reading(self, serial):
         serial.flushInput()
-        reading = serial.readline().decode() or f'-  0.00  g  \r\n'
-        reading = float(reading.lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').strip(' '))
+        reading = serial.readline().decode()
+        reading = reading or f'-  0.00  g  \r\n'
+        reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').strip(' '))
         return reading
 
     def validate_reading(self, reading, last_reading, calculation_data):
