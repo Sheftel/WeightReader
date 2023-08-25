@@ -10,6 +10,7 @@ from utils import raise_error
 class Reader:
     interpolation_data = None
     last_read = {}
+    log_file = None
 
     def read_data(self, layout, serial, calculation_data, filename, period=1, runtime=None, digits_after_dec=3, logging=False):
         """
@@ -24,8 +25,8 @@ class Reader:
             raise_error(message="Ошибка в пути к файлу.")
             return layout.reset_layout()
         if logging:
-            log_file = open(ROOT_PATH/f'log_{datetime.date.today()}_{serial.port}', "a+")
-            log_file.write('\n[LOG START]\n')
+            self.log_file = open(ROOT_PATH/f'log_{datetime.date.today()}_{serial.port}', "a+")
+            self.log_file.write('\n[LOG START]\n')
             serial.flushInput()
         file = open(filename, "a+")
         file.write(f"Время, с  Масса, г   Разность масс, г   Поток, {'л/м2 час' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час'}  Проницаемость, {'л/м2 час бар' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час бар'}\n")
@@ -35,10 +36,7 @@ class Reader:
             start = time.time()
             layout.time_elapsed.set(time_elapsed)
             if time_elapsed % period == 0:
-                if logging:
-                    log_file.write(serial.read_all().decode())
-                    log_file.flush()
-                reading = self.get_reading(serial)
+                reading = self.get_reading(serial, logging=logging)
                 if self.validate_reading(reading, last_reading, calculation_data):
                     Thread(target=self.handle,
                            args=(file, layout, time_elapsed, reading, calculation_data, last_reading, digits_after_dec)).start()
@@ -53,14 +51,25 @@ class Reader:
         file.write('\n')
         file.close()
         if logging:
-            log_file.write('\n[LOG END]\n')
-            log_file.close()
+            self.log_file.write('\n[LOG END]\n')
+            self.log_file.close()
         layout.stop()
 
-    def get_reading(self, serial):
-        serial.flushInput()
+    def get_reading(self, serial, logging=False):
+        buffer = serial.read(serial.in_waiting).decode()
         reading = serial.readline().decode()
+        if not buffer.endswith('\n'):
+            if '\n' in buffer:
+                split_buffer = buffer.split('\n')
+                last_string = split_buffer[-1]
+                buffer = split_buffer[:-1]
+            else:
+                last_string = buffer
+                buffer = ''
+            reading = last_string+reading
         reading = reading or f'-  0.00  g  \r\n'
+        if logging:
+            self.write_log(data=buffer+reading)
         reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').strip(' '))
         return reading
 
@@ -110,3 +119,7 @@ class Reader:
         flow = flow/calculation_data['flow_dimension']
         permeability = flow / calculation_data['difference']
         return reading, mass_difference, volume, flow, permeability
+
+    def write_log(self, data):
+        self.log_file.write(data)
+        self.log_file.flush()
