@@ -11,6 +11,7 @@ class Reader:
     interpolation_data = None
     last_read = {}
     log_file = None
+    filename = None
 
     def read_data(self, layout, serial, calculation_data, filename, period=1, runtime=None, digits_after_dec=3, logging=False):
         """
@@ -24,12 +25,15 @@ class Reader:
         except FileNotFoundError:
             raise_error(message="Ошибка в пути к файлу.")
             return layout.reset_layout()
+        self.filename = filename
         if logging:
             self.log_file = open(ROOT_PATH/f'log_{datetime.date.today()}_{serial.port}', "a+")
             self.log_file.write('\n[LOG START]\n')
             serial.flushInput()
         file = open(filename, "a+")
+        file.write(f"{datetime.date.today()}  {datetime.datetime.now().strftime('%H:%M')}\n")
         file.write(f"Время, с  Масса, г   Разность масс, г   Поток, {'л/м2 час' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час'}  Проницаемость, {'л/м2 час бар' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час бар'}\n")
+        file.close()
         last_reading = 0
         time_elapsed = layout.time_elapsed.get()
         while not getattr(thread, "stop_thread", False) and (runtime is None or time_elapsed <= runtime):
@@ -37,17 +41,21 @@ class Reader:
             layout.time_elapsed.set(time_elapsed)
             if time_elapsed % period == 0:
                 reading = self.get_reading(serial, logging=logging)
-                if self.validate_reading(reading, last_reading, calculation_data):
-                    Thread(target=self.handle,
-                           args=(file, layout, time_elapsed, reading, calculation_data, last_reading, digits_after_dec)).start()
-                    last_reading = reading
-                else:
-                    self.interpolation_data = {'reading': reading,
-                                               'time': time_elapsed}
+                if reading is not None:
+                    if self.validate_reading(reading, last_reading, calculation_data):
+                        Thread(target=self.handle,
+                               args=(layout, time_elapsed, reading,
+                                     calculation_data, last_reading, digits_after_dec)).start()
+                        last_reading = reading
+                    else:
+                        self.interpolation_data = {'reading': reading,
+                                                   'time': time_elapsed}
             time_elapsed += 1
             elapsed = time.time() - start
             time.sleep(1. - min(1., elapsed))
         time.sleep(1.)
+
+        file = open(filename, "a+")
         file.write('\n')
         file.close()
         if logging:
@@ -70,7 +78,10 @@ class Reader:
         reading = reading or f'-  0.00  g  \r\n'
         if logging:
             self.write_log(data=buffer+reading)
-        reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').strip(' '))
+        try:
+            reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').rstrip('!').strip(' '))
+        except ValueError:
+            reading = None
         return reading
 
     def validate_reading(self, reading, last_reading, calculation_data):
@@ -79,7 +90,8 @@ class Reader:
             return False
         return True
 
-    def handle(self, file, layout, now, reading, calculation_data, last_reading=None, digits_after_dec=2):
+    def handle(self, layout, now, reading, calculation_data, last_reading=None, digits_after_dec=2):
+        file = open(self.filename, "a+")
         if self.interpolation_data:
             mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
                                                                                last_reading=self.interpolation_data[
@@ -106,7 +118,7 @@ class Reader:
             'permeability': permeability
         }
         file.write(f"{now}  {mass:.{digits_after_dec}f}  {mass_difference:.{digits_after_dec}f}  {flow:.{digits_after_dec}f}  {permeability:.{digits_after_dec}f}  \r")
-        file.flush()
+        file.close()
         layout.entries_made.set(layout.entries_made.get() + 1)
 
     def calculate(self, reading, calculation_data, last_reading=0.0, interpolate=False, prev_diff=None, next_diff=None):
