@@ -75,11 +75,13 @@ class Reader:
                 last_string = buffer
                 buffer = ''
             reading = last_string+reading
-        reading = reading or f'-  0.00  g  \r\n'
+        reading = reading or f'-  0.00  !g  \r\n'
         if logging:
             self.write_log(data=buffer+reading)
         try:
-            reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').rstrip('\r\n').rstrip(' ').rstrip('g').rstrip('!').strip(' '))
+            reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').
+                            rstrip('\r\n').rstrip(' ').rstrip('g').rstrip('!').
+                            strip(' '))
         except ValueError:
             reading = None
         return reading
