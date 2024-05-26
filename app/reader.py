@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import time
 from threading import current_thread, Thread
 
@@ -75,13 +76,12 @@ class Reader:
                 last_string = buffer
                 buffer = ''
             reading = last_string+reading
-        reading = reading or f'-  0.00  !g  \r\n'
+        reading = reading or '-  0.00  g  !\r\n'
         if logging:
             self.write_log(data=buffer+reading)
         try:
-            reading = float(reading.lstrip('+').lstrip('-').lstrip(' ').
-                            rstrip('\r\n').rstrip(' ').rstrip('g').rstrip('!').
-                            strip(' '))
+            reading = re.search(r'(\d+\.\d+ +g)', reading).group(1)
+            reading = float(reading.rstrip(' ').rstrip('g'))
         except ValueError:
             reading = None
         return reading
