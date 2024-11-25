@@ -7,7 +7,7 @@ from tkinter import ttk, filedialog as fd
 from serial import Serial, SerialException
 
 from config import *
-from utils import raise_error, xview_event_handler
+from utils import raise_error, xview_event_handler, sample_new_sample_button_mb
 from reader import Reader
 
 
@@ -23,36 +23,40 @@ class Layout:
         # frames
         mainframe = ttk.Frame(root, padding="5 5 5 5")
         app_params = ttk.Frame(mainframe)
-        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=210, height=500)
-        output = ttk.LabelFrame(mainframe, text='Вывод', width=210, height=500)
+        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=420, height=400)
+        output = ttk.LabelFrame(mainframe, text='Вывод', width=220, height=120)
+        samples_frame = ttk.LabelFrame(mainframe, text='Cбор проб', width=220, height=350)
         flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=180, height=50)
         run_buttons = ttk.Frame(mainframe)
 
         mainframe.grid(column=0, row=0)
-        app_params.grid(column=0, row=0, sticky=(N, W), padx=10, pady=(0, 5), columnspan=5)
-        run_params.grid(column=0, row=1, sticky=(N, W), padx=(15, 15), pady=(0, 2), columnspan=2)
-        output.grid(column=2, row=1, sticky=(N, E), padx=(15, 5), pady=(0, 2), columnspan=2)
-        run_buttons.grid(column=0, row=2, sticky=(N, W), padx=10, pady=(0, 5), columnspan=5)
+        app_params.grid(column=0, row=0, sticky=(N, W), padx=10, pady=(0, 5), columnspan=3)
+        run_params.grid(column=0, row=1, sticky=(N, W), padx=(15, 5), pady=(0, 2), columnspan=1, rowspan=2)
+
+        output.grid(column=1, row=1, sticky=(N, W), padx=(5, 10), pady=(0, 0), columnspan=1)
+        samples_frame.grid(column=1, row=2, sticky=(N, W), padx=(5, 10), pady=(0, 0), columnspan=1)
+
+        run_buttons.grid(column=0, row=3, sticky=(N, W), padx=15, pady=(0, 5), columnspan=3)
 
         # app params
         self.filename = StringVar(value=DEFAULT_FILE_PATH / f'{date.today()}.txt')
         self.filename.trace_add("write", self.filename_write_callback)
         filename_label = ttk.Label(app_params, text='Название файла: ')
-        self.filename_entry = ttk.Entry(app_params, textvariable=self.filename, width=40)
+        self.filename_entry = ttk.Entry(app_params, textvariable=self.filename, width=50)
         filename_buttons = ttk.Frame(app_params)
         self.filename_open_button = ttk.Button(filename_buttons, text='Открыть', command=self.select_file,
-                                               width=15)
+                                               width=26)
         self.filename_save_button = ttk.Button(filename_buttons, text='Создать новый', command=self.save_file,
-                                               width=15)
+                                               width=26)
         self.settings_button = ttk.Button(app_params, text='Настройки cерийного порта', command=self.serial_settings,
-                                          width=74)
+                                          width=106)
         filename_label.grid(column=0, row=0, sticky=(N, W), padx=10, columnspan=5)
         self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(5, 5), pady=(3, 1), columnspan=2)
         filename_buttons.grid(column=2, row=1, padx=(0, 0), pady=(1, 1), columnspan=2)
-        self.filename_save_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
-        self.filename_open_button.grid(column=2, row=0, sticky=(N, W), padx=(0, 0), pady=(0, 1), columnspan=2)
+        self.filename_save_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 2), pady=(0, 1), columnspan=2)
+        self.filename_open_button.grid(column=2, row=0, sticky=(N, W), padx=(3, 0), pady=(0, 1), columnspan=2)
 
-        self.settings_button.grid(column=0, row=2, padx=(3, 0), pady=(1, 1), columnspan=5)
+        self.settings_button.grid(column=0, row=2, padx=(5, 0), pady=(1, 1), columnspan=5)
 
         # run params
         run_params.grid_propagate(FALSE)
@@ -69,7 +73,7 @@ class Layout:
 
         spinbox_width = 27
 
-        difference_label = ttk.Label(run_params, text='Разность давлений (бар):')
+        difference_label = ttk.Label(run_params, text='Разность давлений \n(бар):')
         self.difference_spinbox = ttk.Spinbox(run_params,
                                               width=spinbox_width,
                                               textvariable=self.difference,
@@ -79,7 +83,7 @@ class Layout:
                                               to=1000,
                                               increment=1)
 
-        interval_label = ttk.Label(run_params, text='Интервал записи (секунд):')
+        interval_label = ttk.Label(run_params, text='Интервал записи \n(секунд):')
         self.interval_spinbox = ttk.Spinbox(run_params,
                                             width=spinbox_width,
                                             textvariable=self.interval,
@@ -122,7 +126,7 @@ class Layout:
                                                         variable=self.flow_dimension, value=1)
         self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м3/м2 час',
                                                              variable=self.flow_dimension, value=1000)
-        runtime_label = ttk.Label(run_params, text='Время эксперимента(минут):')
+        runtime_label = ttk.Label(run_params, text='Время эксперимента\n(минут):')
         self.runtime_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
                                            textvariable=self.runtime,
@@ -142,28 +146,35 @@ class Layout:
                                                     increment=1)
         self.log_checkbox = ttk.Checkbutton(run_params, variable=self.logging, text='Вести лог данных с весов:')
 
-        difference_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.difference_spinbox.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        interval_label.grid(column=0, row=2, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.interval_spinbox.grid(column=0, row=3, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        diameter_label.grid(column=0, row=4, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.diameter_spinbox.grid(column=0, row=5, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        density_label.grid(column=0, row=6, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.density_spinbox.grid(column=0, row=7, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        diff_percent_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.diff_percent_spinbox.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        runtime_label.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.runtime_spinbox.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        digits_after_dec_label.grid(column=0, row=12, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.digits_after_dec_spinbox.grid(column=0, row=13, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        flow_dimension_frame.grid(column=0, row=14, sticky=(N, W), padx=(10, 10), pady=(1, 1))
-        self.log_checkbox.grid(column=0, row=15,sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        difference_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.difference_spinbox.grid(column=0, row=1, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        interval_label.grid(column=0, row=2, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.interval_spinbox.grid(column=0, row=3, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        diameter_label.grid(column=0, row=4, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.diameter_spinbox.grid(column=0, row=5, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        density_label.grid(column=0, row=6, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.density_spinbox.grid(column=0, row=7, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        diff_percent_label.grid(column=1, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.diff_percent_spinbox.grid(column=1, row=1, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        runtime_label.grid(column=1, row=2, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.runtime_spinbox.grid(column=1, row=3, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        digits_after_dec_label.grid(column=1, row=4, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+        self.digits_after_dec_spinbox.grid(column=1, row=5, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
+
+        self.log_checkbox.grid(column=1, row=6, sticky=(N, W), padx=(10, 5), pady=(1, 1))
+
         # flow_dimension
         flow_dimension_frame.grid_propagate(FALSE)
+        flow_dimension_frame.grid(column=0, row=8, sticky=(N, W), padx=(10, 5), pady=(1, 1))
 
         self.flow_dimension_radio_one.grid(column=0, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=2)
         self.flow_dimension_radio_thousand.grid(column=2, row=0, sticky=(N, W), padx=(5, 10), pady=(1, 1), columnspan=2)
-
 
         # output
         output.grid_propagate(FALSE)
@@ -177,13 +188,68 @@ class Layout:
         self.time_elapsed_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.time_elapsed_text.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.entries_made_label.grid(column=0, row=2, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
-        self.entries_made_text.grid(column=0, row=3, sticky=(N, W), padx=(10, 10), pady=(1, 5), columnspan=2)
+        self.entries_made_text.grid(column=0, row=3, sticky=(N, W), padx=(10, 10), pady=(1, 20), columnspan=2)
+
+        # samples
+        self.collect_samples = BooleanVar(value=False)
+        self.max_sample_value = DoubleVar(value=5.0)
+        self.current_sample = IntVar(value=1)
+        self.sample_time_elapsed = IntVar()
+        self.sample_value = DoubleVar(value=0.0)
+
+        self.collect_samples_checkbox = ttk.Checkbutton(samples_frame,
+                                                        variable=self.collect_samples, text='Включить',
+                                                        command=self.collect_samples_value_changed)
+
+        max_sample_value_label = ttk.Label(samples_frame, text='Максимальный объем пробы, мл:')
+        self.max_sample_value_spinbox = ttk.Spinbox(samples_frame,
+                                                    width=spinbox_width,
+                                                    textvariable=self.max_sample_value,
+                                                    validate='key',
+                                                    validatecommand=(range_validation, '%P'),
+                                                    from_=0,
+                                                    to=100,
+                                                    increment=0.1)
+        self.max_sample_value_spinbox.config(state=DISABLED)
+
+        self.current_sample_label = ttk.Label(samples_frame, text='Номер пробы: ')
+        self.current_sample_text = ttk.Entry(samples_frame, textvariable=self.current_sample, state='readonly',
+                                             width=30)
+
+        self.sample_time_elapsed_label = ttk.Label(samples_frame, text='Время с начала сбора пробы, сек: ')
+        self.sample_time_elapsed_text = ttk.Entry(samples_frame, textvariable=self.sample_time_elapsed,
+                                                  state='readonly', width=30)
+
+        self.sample_value_label = ttk.Label(samples_frame, text='Объем пробы, мл: ')
+        self.sample_value_text = ttk.Entry(samples_frame, textvariable=self.sample_value,
+                                           state='readonly', width=30)
+
+        self.new_sample_button = ttk.Button(samples_frame, text='Перейти к следующей пробе', command=self.new_sample,
+                                            width=30,
+                                            state=DISABLED)
+
+        # sample grid
+
+        self.collect_samples_checkbox.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        max_sample_value_label.grid(column=0, row=2, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=1)
+        self.max_sample_value_spinbox.grid(column=0, row=3, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=1)
+
+        self.current_sample_label.grid(column=0, row=4, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        self.current_sample_text.grid(column=0, row=5, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+
+        self.sample_time_elapsed_label.grid(column=0, row=6, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        self.sample_time_elapsed_text.grid(column=0, row=7, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+
+        self.sample_value_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+        self.sample_value_text.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1))
+
+        self.new_sample_button.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(15, 17))
 
         # run buttons
-        self.start_button = ttk.Button(run_buttons, text='Старт', command=self.start, width=34, state=NORMAL)
-        self.stop_button = ttk.Button(run_buttons, text='Стоп', command=self.stop, width=34, state=DISABLED)
-        self.start_button.grid(column=0, row=0, sticky=(N, W), padx=(3, 12), pady=(1, 5), columnspan=2)
-        self.stop_button.grid(column=3, row=0, sticky=(N, W), padx=(14, 2), pady=(1, 5), columnspan=2)
+        self.start_button = ttk.Button(run_buttons, text='Старт', command=self.start, width=52, state=NORMAL)
+        self.stop_button = ttk.Button(run_buttons, text='Стоп', command=self.stop, width=52, state=DISABLED)
+        self.start_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 5), pady=(1, 5), columnspan=2)
+        self.stop_button.grid(column=2, row=0, sticky=(N, W), padx=(5, 0), pady=(1, 5), columnspan=2)
 
         self.serial_settings()
 
@@ -211,10 +277,17 @@ class Layout:
 
     def validate_range(self, user_input):
         self.start_button.config(state=DISABLED)
-        if user_input.isdigit() or user_input == '' or user_input == '.':
+        if user_input.isdigit() or user_input == '' or user_input == '.' or float(user_input):
             self.start_button.config(state=NORMAL)
             return True
         return False
+
+    def collect_samples_value_changed(self):
+        value = self.collect_samples.get()
+        if value:
+            self.max_sample_value_spinbox.config(state=NORMAL)
+        else:
+            self.max_sample_value_spinbox.config(state=DISABLED)
 
     def serial_settings(self):
         SettingsLayout(self.root, self)
@@ -229,15 +302,23 @@ class Layout:
             'percent': self.diff_percent.get(),
             'flow_dimension': self.flow_dimension.get()
         }
+
+        samples_data = {
+            'collect_samples': self.collect_samples.get(),
+            'max_sample_value': self.max_sample_value.get()
+        }
+
         self.time_elapsed.set(0)
         self.entries_made.set(0)
         self.runtime_seconds = self.runtime.get() * 60 if self.runtime.get() > 0 else None
         self.is_running = True
+
         self.thread = Thread(target=Reader.read_data,
-                             args=(Reader(), self, self.serial, calculation_data, self.filename.get(),
+                             args=(Reader(), self, self.serial, calculation_data, samples_data, self.filename.get(),
                                    self.interval.get(), self.runtime_seconds, self.digits_after_dec.get(),
                                    self.logging.get()))
         self.thread.start()
+
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
         self.settings_button.config(state=DISABLED)
@@ -255,10 +336,13 @@ class Layout:
         self.log_checkbox.config(state=DISABLED)
         self.start_button.config(state=DISABLED)
 
+        self.handle_samples_start()
+
     def stop(self):
         if self.thread:
             self.thread.stop_thread = True
             self.is_running = False
+
         self.filename_entry.config(state=NORMAL)
         self.settings_button.config(state=NORMAL)
         self.difference_spinbox.config(state=NORMAL)
@@ -275,6 +359,33 @@ class Layout:
         self.log_checkbox.config(state=NORMAL)
         self.start_button.config(state=NORMAL)
         self.stop_button.config(state=DISABLED)
+
+        self.handle_samples_stop()
+
+    def handle_samples_start(self):
+        # disable all inputs
+
+        self.collect_samples_checkbox.config(state=DISABLED)
+        self.max_sample_value_spinbox.config(state=DISABLED)
+
+        # enable new sample button
+
+        self.new_sample_button.config(state=NORMAL)
+
+    def handle_samples_stop(self):
+        # disable all inputs
+
+        self.collect_samples_checkbox.config(state=NORMAL)
+        self.max_sample_value_spinbox.config(state=NORMAL)
+
+        # enable new sample button
+
+        self.new_sample_button.config(state=DISABLED)
+
+    def new_sample(self):
+        if sample_new_sample_button_mb(current_sample=self.current_sample.get(), current_volume=self.sample_value.get())\
+                and self.thread:
+            self.thread.start_new_sample = True
 
 
 class SettingsLayout:
