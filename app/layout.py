@@ -49,14 +49,14 @@ class Layout:
         self.filename_save_button = ttk.Button(filename_buttons, text='Создать новый', command=self.save_file,
                                                width=26)
         self.settings_button = ttk.Button(app_params, text='Настройки cерийного порта', command=self.serial_settings,
-                                          width=106)
+                                          width=54)
         filename_label.grid(column=0, row=0, sticky=(N, W), padx=10, columnspan=5)
         self.filename_entry.grid(column=0, row=1, sticky=(N, W), padx=(5, 5), pady=(3, 1), columnspan=2)
         filename_buttons.grid(column=2, row=1, padx=(0, 0), pady=(1, 1), columnspan=2)
         self.filename_save_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 2), pady=(0, 1), columnspan=2)
         self.filename_open_button.grid(column=2, row=0, sticky=(N, W), padx=(3, 0), pady=(0, 1), columnspan=2)
 
-        self.settings_button.grid(column=0, row=2, padx=(5, 0), pady=(1, 1), columnspan=5)
+        self.settings_button.grid(column=2, row=2, padx=(0, 0), pady=(1, 1), columnspan=5)
 
         # run params
         run_params.grid_propagate(FALSE)
@@ -73,7 +73,7 @@ class Layout:
 
         spinbox_width = 27
 
-        difference_label = ttk.Label(run_params, text='Разность давлений \n(бар):')
+        difference_label = ttk.Label(run_params, text='Разность давлений \n(бар)')
         self.difference_spinbox = ttk.Spinbox(run_params,
                                               width=spinbox_width,
                                               textvariable=self.difference,
@@ -83,7 +83,7 @@ class Layout:
                                               to=1000,
                                               increment=1)
 
-        interval_label = ttk.Label(run_params, text='Интервал записи \n(секунд):')
+        interval_label = ttk.Label(run_params, text='Интервал записи \n(секунд)')
         self.interval_spinbox = ttk.Spinbox(run_params,
                                             width=spinbox_width,
                                             textvariable=self.interval,
@@ -93,7 +93,7 @@ class Layout:
                                             to=MAX_INTERVAL,
                                             increment=1)
 
-        diameter_label = ttk.Label(run_params, text='Диаметр рабочей поверхности\nмембраны (мм):')
+        diameter_label = ttk.Label(run_params, text='Диаметр рабочей поверхности\nмембраны (мм)')
         self.diameter_spinbox = ttk.Spinbox(run_params,
                                             width=spinbox_width,
                                             textvariable=self.diameter,
@@ -103,7 +103,7 @@ class Layout:
                                             to=1000,
                                             increment=1)
 
-        density_label = ttk.Label(run_params, text='Плотность воды при\nкомнатной температуре (кг/м3):')
+        density_label = ttk.Label(run_params, text='Плотность воды при\nкомнатной температуре (кг/м3)')
         self.density_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
                                            textvariable=self.density,
@@ -126,7 +126,7 @@ class Layout:
                                                         variable=self.flow_dimension, value=1)
         self.flow_dimension_radio_thousand = ttk.Radiobutton(flow_dimension_frame, text='м3/м2 час',
                                                              variable=self.flow_dimension, value=1000)
-        runtime_label = ttk.Label(run_params, text='Время эксперимента\n(минут):')
+        runtime_label = ttk.Label(run_params, text='Время эксперимента\n(минут)')
         self.runtime_spinbox = ttk.Spinbox(run_params,
                                            width=spinbox_width,
                                            textvariable=self.runtime,
@@ -135,7 +135,7 @@ class Layout:
                                            from_=0,
                                            to=1000,
                                            increment=1)
-        digits_after_dec_label = ttk.Label(run_params, text='Количество символов после\nзапятой:')
+        digits_after_dec_label = ttk.Label(run_params, text='Количество символов после\nзапятой')
         self.digits_after_dec_spinbox = ttk.Spinbox(run_params,
                                                     width=spinbox_width,
                                                     textvariable=self.digits_after_dec,
@@ -144,7 +144,7 @@ class Layout:
                                                     from_=1,
                                                     to=6,
                                                     increment=1)
-        self.log_checkbox = ttk.Checkbutton(run_params, variable=self.logging, text='Вести лог данных с весов:')
+        self.log_checkbox = ttk.Checkbutton(run_params, variable=self.logging, text='Вести лог данных с весов')
 
         difference_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
         self.difference_spinbox.grid(column=0, row=1, sticky=(N, W), padx=(10, 5), pady=(1, 1), columnspan=1)
@@ -180,10 +180,10 @@ class Layout:
         output.grid_propagate(FALSE)
 
         self.time_elapsed = IntVar()
-        self.time_elapsed_label = ttk.Label(output, text='Прошло времени(сек.):')
+        self.time_elapsed_label = ttk.Label(output, text='Прошло времени(сек)')
         self.time_elapsed_text = ttk.Entry(output, textvariable=self.time_elapsed, state='readonly', width=30)
         self.entries_made = IntVar()
-        self.entries_made_label = ttk.Label(output, text='Записей сделано:')
+        self.entries_made_label = ttk.Label(output, text='Записей сделано')
         self.entries_made_text = ttk.Entry(output, textvariable=self.entries_made, state='readonly', width=30)
         self.time_elapsed_label.grid(column=0, row=0, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
         self.time_elapsed_text.grid(column=0, row=1, sticky=(N, W), padx=(10, 10), pady=(1, 1), columnspan=2)
@@ -201,7 +201,7 @@ class Layout:
                                                         variable=self.collect_samples, text='Включить',
                                                         command=self.collect_samples_value_changed)
 
-        max_sample_value_label = ttk.Label(samples_frame, text='Максимальный объем пробы, мл:')
+        max_sample_value_label = ttk.Label(samples_frame, text='Максимальный объем пробы (мл)')
         self.max_sample_value_spinbox = ttk.Spinbox(samples_frame,
                                                     width=spinbox_width,
                                                     textvariable=self.max_sample_value,
@@ -212,15 +212,15 @@ class Layout:
                                                     increment=0.1)
         self.max_sample_value_spinbox.config(state=DISABLED)
 
-        self.current_sample_label = ttk.Label(samples_frame, text='Номер пробы: ')
+        self.current_sample_label = ttk.Label(samples_frame, text='Номер пробы ')
         self.current_sample_text = ttk.Entry(samples_frame, textvariable=self.current_sample, state='readonly',
                                              width=30)
 
-        self.sample_time_elapsed_label = ttk.Label(samples_frame, text='Время с начала сбора пробы, сек: ')
+        self.sample_time_elapsed_label = ttk.Label(samples_frame, text='Время с начала сбора пробы (сек) ')
         self.sample_time_elapsed_text = ttk.Entry(samples_frame, textvariable=self.sample_time_elapsed,
                                                   state='readonly', width=30)
 
-        self.sample_value_label = ttk.Label(samples_frame, text='Объем пробы, мл: ')
+        self.sample_value_label = ttk.Label(samples_frame, text='Объем пробы (мл) ')
         self.sample_value_text = ttk.Entry(samples_frame, textvariable=self.sample_value,
                                            state='readonly', width=30)
 
