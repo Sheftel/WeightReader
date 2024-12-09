@@ -277,10 +277,16 @@ class Layout:
 
     def validate_range(self, user_input):
         self.start_button.config(state=DISABLED)
-        if user_input.isdigit() or user_input == '' or user_input == '.' or float(user_input):
+        try:
+            float(user_input)
             self.start_button.config(state=NORMAL)
             return True
-        return False
+        except ValueError:
+            return False
+        # if user_input.isdigit() or user_input == '' or user_input == '.' or float(user_input):
+        #     self.start_button.config(state=NORMAL)
+        #     return True
+       # return False
 
     def collect_samples_value_changed(self):
         value = self.collect_samples.get()

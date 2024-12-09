@@ -53,15 +53,14 @@ class Reader:
             self.log_file = open(ROOT_PATH / f'log_{datetime.date.today()}_{serial.port}', "a+")
             self.log_file.write('\n[LOG START]\n')
             serial.flushInput()
-
-        file = open(filename, "a+")
-        file.write(f"{datetime.date.today()}  {datetime.datetime.now().strftime('%H:%M')}\n")
-        file.write(
-            f"Время, с  Масса, г   Разность масс, г   Поток, {'л/м2 час' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час'}  Проницаемость, {'л/м2 час бар' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час бар'}\n")
-        file.close()
-
+        with open(self.filename, "a+") as file:
+        #file = open(self.filename, "a+")
+            file.write(f"{datetime.date.today()}  {datetime.datetime.now().strftime('%H:%M')}\n")
+            file.write(
+                f"Время, с  Масса, г   Разность масс, г   Поток, {'л/м2 час' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час'}  Проницаемость, {'л/м2 час бар' if calculation_data['flow_dimension'] == 1 else 'м3/м2 час бар'}\n")
         last_reading = 0
         time_elapsed = layout.time_elapsed.get()
+
         while not getattr(thread, "stop_thread", False) and (runtime is None or time_elapsed <= runtime):
             start = time.time()
             layout.time_elapsed.set(time_elapsed)
@@ -95,8 +94,17 @@ class Reader:
         layout.stop()
 
     def get_reading(self, serial, logging=False):
-        buffer = serial.read(serial.in_waiting).decode()
-        reading = serial.readline().decode()
+        try:
+            buffer = serial.read(serial.in_waiting).decode()
+            reading = serial.readline().decode()
+        except OSError:
+            raise_error("Потеряна связь с весами", "Потеряна связь с весами. Проверьте подключение и запустите программу снова")
+            current_thread().stop_thread = True
+            raise
+        except UnicodeDecodeError as e:
+            raise_error("Ошибка обработки", f"Возникла ошибка при обработке данных. {e}")
+            current_thread().stop_thread = True
+            raise
         if not buffer.endswith('\n'):
             if '\n' in buffer:
                 split_buffer = buffer.split('\n')
@@ -114,6 +122,8 @@ class Reader:
             reading = float(reading.rstrip(' ').rstrip('g'))
         except ValueError:
             reading = None
+        except AttributeError:
+            reading = self.get_reading(serial)
         return reading
 
     def validate_reading(self, reading, last_reading, calculation_data):
@@ -126,7 +136,7 @@ class Reader:
         if self.interpolation_data:
             mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
                                                                                last_reading=self.interpolation_data[
-                                                                                   'reading'])
+                                                                                     'reading'])
             (inter_mass, inter_diff, inter_volume,
              inter_flow, inter_perm) = self.calculate(self.interpolation_data['reading'], calculation_data,
                                                       last_reading=last_reading,
@@ -147,10 +157,10 @@ class Reader:
             'flow': flow,
             'permeability': permeability
         }
-        if self.collect_samples:
-            self.handle_samples(time_elapsed=now)
         self.write_reading(now, mass, mass_difference, flow, permeability)
         layout.entries_made.set(layout.entries_made.get() + 1)
+        if self.collect_samples:
+            self.handle_samples(now)
 
     def calculate(self, reading, calculation_data, last_reading=0.0, interpolate=False, prev_diff=None, next_diff=None):
         if interpolate:
@@ -168,10 +178,10 @@ class Reader:
         self.log_file.flush()
 
     def write_reading(self, current_time, mass, mass_difference, flow, permeability):
-        file = open(self.filename, "a+")
-        file.write(
-            f"{current_time}  {mass:.{self.digits_after_dec}f}  {mass_difference:.{self.digits_after_dec}f}  {flow:.{self.digits_after_dec}f}  {permeability:.{self.digits_after_dec}f}  \r")
-        file.flush()
+        with open(self.filename, "a+") as file:
+            file.write(
+                f"{current_time}  {mass:.{self.digits_after_dec}f}  {mass_difference:.{self.digits_after_dec}f}  {flow:.{self.digits_after_dec}f}  {permeability:.{self.digits_after_dec}f}  \r")
+
 
     def new_sample(self, time_elapsed):
         sample_data = self.sample_data
@@ -187,7 +197,7 @@ class Reader:
                    f"{time_elapsed}  "
                    f"{sample_data['current_volume']:.{self.digits_after_dec}f}  \r")
         file.flush()
-
+        file.close()
         self.sample_data['current_sample'] += 1
         self.sample_data['current_volume'] = 0.0
         self.sample_data['start_time'] = time_elapsed
@@ -198,7 +208,8 @@ class Reader:
         self.sample_data['current_volume'] += self.last_read['mass_difference']
         if not self.sample_data['continue_sample']:
             if self.sample_data['current_volume'] >= self.sample_data['max_volume']:
-                self.handle_sample_max_volume_reached(time_elapsed)
+                Thread(target=self.handle_sample_max_volume_reached,
+                       args=[time_elapsed]).start()
 
     def handle_start_new_sample_command(self, time_elapsed):
         self.new_sample(time_elapsed)
