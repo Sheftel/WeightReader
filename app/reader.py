@@ -100,11 +100,12 @@ class Reader:
         except OSError:
             raise_error("Потеряна связь с весами", "Потеряна связь с весами. Проверьте подключение и запустите программу снова")
             current_thread().stop_thread = True
-            raise
+            self.layout.reset_layout()
         except UnicodeDecodeError as e:
             raise_error("Ошибка обработки", f"Возникла ошибка при обработке данных. {e}")
             current_thread().stop_thread = True
-            raise
+            self.layout.reset_layout()
+
         if not buffer.endswith('\n'):
             if '\n' in buffer:
                 split_buffer = buffer.split('\n')

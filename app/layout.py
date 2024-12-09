@@ -393,6 +393,26 @@ class Layout:
                 and self.thread:
             self.thread.start_new_sample = True
 
+    def reset_layout(self):
+        self.filename_entry.config(state=NORMAL)
+        self.settings_button.config(state=NORMAL)
+        self.difference_spinbox.config(state=NORMAL)
+        self.flow_dimension_radio_one.config(state=NORMAL)
+        self.flow_dimension_radio_thousand.config(state=NORMAL)
+        self.diff_percent_spinbox.config(state=NORMAL)
+        self.interval_spinbox.config(state=NORMAL)
+        self.density_spinbox.config(state=NORMAL)
+        self.diameter_spinbox.config(state=NORMAL)
+        self.runtime_spinbox.config(state=NORMAL)
+        self.digits_after_dec_spinbox.config(state=NORMAL)
+        self.filename_open_button.config(state=NORMAL)
+        self.filename_save_button.config(state=NORMAL)
+        self.log_checkbox.config(state=NORMAL)
+        self.start_button.config(state=NORMAL)
+        self.stop_button.config(state=DISABLED)
+
+        self.handle_samples_stop()
+
 
 class SettingsLayout:
     def __init__(self, root, parent):
