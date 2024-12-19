@@ -35,7 +35,7 @@ class Reader:
         try:
             os.makedirs(os.path.dirname(filename), exist_ok=True)
         except FileNotFoundError:
-            raise_error(message="Ошибка в пути к файлу.")
+            raise_error(message="Ошибка в пути к файлу.", layout=self.layout)
             return layout.reset_layout()
 
         self.filename = filename
@@ -91,18 +91,17 @@ class Reader:
         if logging:
             self.log_file.write('\n[LOG END]\n')
             self.log_file.close()
-        layout.stop()
 
     def get_reading(self, serial, logging=False):
         try:
             buffer = serial.read(serial.in_waiting).decode()
             reading = serial.readline().decode()
         except OSError:
-            raise_error("Потеряна связь с весами", "Потеряна связь с весами. Проверьте подключение и запустите программу снова")
+            raise_error("Потеряна связь с весами", "Потеряна связь с весами. Проверьте подключение и запустите программу снова", layout=self.layout)
             current_thread().stop_thread = True
             self.layout.reset_layout()
         except UnicodeDecodeError as e:
-            raise_error("Ошибка обработки", f"Возникла ошибка при обработке данных. {e}")
+            raise_error("Ошибка обработки", f"Возникла ошибка при обработке данных. {e}", layout=self.layout)
             current_thread().stop_thread = True
             self.layout.reset_layout()
 
@@ -119,7 +118,7 @@ class Reader:
         if logging:
             self.write_log(data=buffer + reading)
         try:
-            reading = re.search(r'(\d+\.\d+ +g)', reading).group(1)
+            reading = re.search(r'(\d+\.\d+)', reading).group(1)
             reading = float(reading.rstrip(' ').rstrip('g'))
         except ValueError:
             reading = None
@@ -183,7 +182,6 @@ class Reader:
             file.write(
                 f"{current_time}  {mass:.{self.digits_after_dec}f}  {mass_difference:.{self.digits_after_dec}f}  {flow:.{self.digits_after_dec}f}  {permeability:.{self.digits_after_dec}f}  \r")
 
-
     def new_sample(self, time_elapsed):
         sample_data = self.sample_data
         if sample_data['current_sample'] == 1:
@@ -217,7 +215,7 @@ class Reader:
 
     def handle_sample_max_volume_reached(self, time_elapsed):
         self.sample_data['continue_sample'] = True
-        messagebox_answer = sample_max_volume_reached_mb(self.sample_data['max_volume'], self.sample_data['current_sample'])
+        messagebox_answer = sample_max_volume_reached_mb(self.sample_data['max_volume'], self.sample_data['current_sample'], self.layout)
         if messagebox_answer:
             self.new_sample(time_elapsed)
 

@@ -17,6 +17,8 @@ class App:
 
     def on_closing(self):
         self.layout.stop()
+        if self.layout.serial:
+            self.layout.serial.close()
         self.tk_root.destroy()
 
     def run(self):

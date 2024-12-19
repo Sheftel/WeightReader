@@ -370,26 +370,26 @@ class Layout:
 
     def handle_samples_start(self):
         # disable all inputs
+        if self.collect_samples.get():
+            self.max_sample_value_spinbox.config(state=DISABLED)
+            # enable new sample button
+            self.new_sample_button.config(state=NORMAL)
 
         self.collect_samples_checkbox.config(state=DISABLED)
-        self.max_sample_value_spinbox.config(state=DISABLED)
-
-        # enable new sample button
-
-        self.new_sample_button.config(state=NORMAL)
 
     def handle_samples_stop(self):
         # disable all inputs
+        if self.collect_samples.get():
+            self.max_sample_value_spinbox.config(state=NORMAL)
+            # enable new sample button
+            self.new_sample_button.config(state=DISABLED)
 
         self.collect_samples_checkbox.config(state=NORMAL)
-        self.max_sample_value_spinbox.config(state=NORMAL)
-
-        # enable new sample button
-
-        self.new_sample_button.config(state=DISABLED)
 
     def new_sample(self):
-        if sample_new_sample_button_mb(current_sample=self.current_sample.get(), current_volume=self.sample_value.get())\
+        if sample_new_sample_button_mb(current_sample=self.current_sample.get(),
+                                       current_volume=self.sample_value.get(),
+                                       layout=self)\
                 and self.thread:
             self.thread.start_new_sample = True
 
