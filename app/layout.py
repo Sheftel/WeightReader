@@ -444,7 +444,7 @@ class SettingsLayout:
         port_label = ttk.Label(frame, text='Порт подключения: ')
         port_entry = ttk.Entry(frame, textvariable=self.port, width=50)
 
-        self.baudrate = IntVar(value=SERIAL_BAUDRATE)
+        self.baudrate = IntVar(value=serial_values['baudrate'])
         baudrate_label = ttk.Label(frame, text='Бит в секунду: ')
         baudrate_combobox = ttk.Combobox(frame, textvariable=self.baudrate,
                                          width=47,
@@ -453,18 +453,18 @@ class SettingsLayout:
                                                                    '2400', '4800', '7200', '9600',
                                                                    '14400', '19200', '38400', '57600',
                                                                    '115200', '12800'])
-        self.bytesize = IntVar(value=SERIAL_BITESIZE)
+        self.bytesize = IntVar(value=serial_values['bytesize'])
         bytesize_label = ttk.Label(frame, text='Биты данных: ')
         bytesize_combobox = ttk.Combobox(frame, textvariable=self.bytesize,
                                          width=47,
                                          state='readonly', values=['4', '5', '6', '7', '8'])
 
-        self.parity = StringVar(value=SERIAL_PARITY)
+        self.parity = StringVar(value=serial_values['parity'])
         parity_label = ttk.Label(frame, text='Четность: ')
         parity_combobox = ttk.Combobox(frame, textvariable=self.parity,
                                        width=47,
                                        state='readonly', values=['E', 'O', 'N', 'M', 'S'])
-        self.stopbits = DoubleVar(value=SERIAL_STOPBITS)
+        self.stopbits = DoubleVar(value=serial_values['stopbits'])
         stopbits_label = ttk.Label(frame, text='Стоповые биты: ')
         stopbits_combobox = ttk.Combobox(frame, textvariable=self.stopbits,
                                          width=47,
