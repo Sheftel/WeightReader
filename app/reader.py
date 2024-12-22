@@ -4,6 +4,7 @@ import re
 import time
 from threading import current_thread, Thread
 
+from serial import SerialException
 from config import ROOT_PATH
 from utils import raise_error, sample_max_volume_reached_mb
 
@@ -30,7 +31,11 @@ class Reader:
         assumes that this method won't be called with filename = None
         """
         thread = current_thread()
-        serial.timeout = 1
+        self.layout = layout
+        try:
+            serial.timeout = 1
+        except SerialException as e:
+            raise_error(message=f'Возникла проблема с доступом к порту:{e}', layout=self.layout)
 
         try:
             os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -40,7 +45,6 @@ class Reader:
 
         self.filename = filename
         self.digits_after_dec = digits_after_dec
-        self.layout = layout
 
         if samples_data['collect_samples']:
             self.collect_samples = True

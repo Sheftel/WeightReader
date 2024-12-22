@@ -481,7 +481,7 @@ class SettingsLayout:
                 stopbits=self.stopbits.get()
             )
         except SerialException as e:
-            raise_error(message=f'Невозможно подключиться к порту:{e}')
+            raise_error(message=f'Невозможно подключиться к порту:{e}', layout=self)
         else:
             self.window.grab_release()
             self.window.destroy()
