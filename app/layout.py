@@ -422,7 +422,25 @@ class SettingsLayout:
         self.window.title = 'Настройки порта'
         self.window.resizable(FALSE, FALSE)
         frame = ttk.Frame(self.window, padding=(5, 5, 5, 5))
-        self.port = StringVar(value=SERIAL_PORT)
+
+        if self.parent.serial:
+            current_serial = self.parent.serial
+            serial_values = {
+                "port": current_serial.port,
+                "baudrate": current_serial.baudrate,
+                "bytesize": current_serial.bytesize,
+                "parity": current_serial.parity,
+                "stopbits": current_serial.stopbits
+            }
+        else:
+            serial_values = {
+                "port": SERIAL_PORT,
+                "baudrate": SERIAL_BAUDRATE,
+                "bytesize": SERIAL_BITESIZE,
+                "parity": SERIAL_PARITY,
+                "stopbits": SERIAL_STOPBITS
+            }
+        self.port = StringVar(value=serial_values['port'])
         port_label = ttk.Label(frame, text='Порт подключения: ')
         port_entry = ttk.Entry(frame, textvariable=self.port, width=50)
 
