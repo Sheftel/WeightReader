@@ -10,7 +10,7 @@ from utils import raise_error, sample_max_volume_reached_mb
 
 
 class Reader:
-    debug = True
+    debug = False
     interpolation_data = None
     last_read = {}
     log_file = None
