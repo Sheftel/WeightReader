@@ -10,6 +10,7 @@ from utils import raise_error, sample_max_volume_reached_mb
 
 
 class Reader:
+    debug = True
     interpolation_data = None
     last_read = {}
     log_file = None
@@ -23,6 +24,7 @@ class Reader:
         "continue_sample": False,
         "start_time": 0
     }
+    reading_list =['0.01  g', '0.02  g', '0.03  g', '0.04  g', '0.05  g', '0.06  g', '0.07  g', '0.08  g', '0.09  g', '0.10  g', '0.12  g', '0.14  g', '0.16  g', '0.18  g', '0.20  g', '0.22  g', '0.24  g', '0.26  g', '0.28  g', '0.30  g', '0.33  g', '0.36  g', '0.39  g', '0.42  g', '0.45  g', '0.48  g', '0.51  g', '0.54  g', '0.57  g', '0.60  g', '0.64  g', '0.68  g', '0.72  g', '0.76  g', '0.80  g', '0.84  g', '0.88  g', '0.92  g', '0.96  g', '1.00  g', '1.05  g', '1.10  g', '1.15  g', '1.20  g', '1.25  g', '1.30  g', '1.35  g', '1.40  g', '1.45  g', '1.50  g', '1.56  g', '1.62  g', '1.68  g', '1.74  g', '1.80  g', '1.86  g', '1.92  g', '1.98  g', '2.04  g', '2.10  g', '2.17  g', '2.24  g', '2.31  g', '2.38  g', '2.45  g', '2.52  g', '2.59  g', '2.66  g', '2.73  g', '2.80  g', '2.88  g', '2.96  g', '3.04  g', '3.12  g', '3.20  g', '3.28  g', '3.36  g', '3.44  g', '3.52  g', '3.60  g', '3.69  g', '3.78  g', '3.87  g', '3.96  g', '4.05  g', '4.14  g', '4.23  g', '4.32  g', '4.41  g', '4.50  g', '4.60  g', '4.70  g', '4.80  g', '4.90  g', '5.00  g', '5.10  g', '5.20  g', '5.30  g', '5.40  g', '5.50  g']
 
     def read_data(self, layout, serial, calculation_data, samples_data, filename, period=1, runtime=None,
                   digits_after_dec=3, logging=False):
@@ -98,8 +100,12 @@ class Reader:
 
     def get_reading(self, serial, logging=False):
         try:
-            buffer = serial.read(serial.in_waiting).decode()
-            reading = serial.readline().decode()
+            if self.debug:
+                buffer = '\n'
+                reading = self.get_debug_reading()
+            else:
+                buffer = serial.read(serial.in_waiting).decode()
+                reading = serial.readline().decode()
         except OSError:
             raise_error("Потеряна связь с весами", "Потеряна связь с весами. Проверьте подключение и запустите программу снова", layout=self.layout)
             current_thread().stop_thread = True
@@ -229,6 +235,14 @@ class Reader:
         self.layout.sample_value.set(self.sample_data['current_volume'])
 
     def get_debug_reading(self):
+        # DEBUG LIST GENERATOR
+        # for i in range(0, 100):
+        #     if i == 0:
+        #         list = []
+        #         last_value = 0.00
+        #     value = last_value + (1 + i // 10) * 0.01
+        #     list.append(f'{value:.2f}  g')
+        #     last_value = value
         if self.reading_list:
             return self.reading_list.pop(0)
         return "-  0.00  g  !\r\n"
