@@ -59,7 +59,7 @@ class Reader:
             self.log_file = open(ROOT_PATH / f'log_{datetime.date.today()}_{serial.port}', "a+")
             self.log_file.write('\n[LOG START]\n')
             serial.flushInput()
-        with open(self.filename, "a+") as file:
+        with open(self.filename, "a+", encoding="utf-8") as file:
         #file = open(self.filename, "a+")
             file.write(f"{datetime.date.today()}  {datetime.datetime.now().strftime('%H:%M')}\n")
             file.write(
@@ -75,23 +75,26 @@ class Reader:
             if getattr(thread, "start_new_sample", False):
                 setattr(thread, "start_new_sample", False)
                 self.handle_start_new_sample_command(time_elapsed)
+            reading = self.get_reading(serial, logging=logging)
+            if reading is not None:
+                if self.validate_reading(reading, last_reading, calculation_data):
+                    Thread(target=self.handle,
+                           args=(layout, time_elapsed, reading,
+                                 calculation_data, last_reading, digits_after_dec)).start()
+                    last_reading = reading
+                else:
+                    self.interpolation_data = {'reading': reading,
+                                               'time': time_elapsed}
+
             if time_elapsed % period == 0:
-                reading = self.get_reading(serial, logging=logging)
-                if reading is not None:
-                    if self.validate_reading(reading, last_reading, calculation_data):
-                        Thread(target=self.handle,
-                               args=(layout, time_elapsed, reading,
-                                     calculation_data, last_reading, digits_after_dec)).start()
-                        last_reading = reading
-                    else:
-                        self.interpolation_data = {'reading': reading,
-                                                   'time': time_elapsed}
+                self.write_reading(time_elapsed, self.last_read['mass'], self.last_read['mass_difference'], self.last_read['flow'], self.last_read['permeability'])
+                layout.entries_made.set(layout.entries_made.get() + 1)
             time_elapsed += 1
             elapsed = time.time() - start
             time.sleep(1. - min(1., elapsed))
         time.sleep(1.)
 
-        file = open(filename, "a+")
+        file = open(filename, "a+", encoding="utf-8")
         file.write('\n')
         file.close()
         if logging:
@@ -167,8 +170,7 @@ class Reader:
             'flow': flow,
             'permeability': permeability
         }
-        self.write_reading(now, mass, mass_difference, flow, permeability)
-        layout.entries_made.set(layout.entries_made.get() + 1)
+
         if self.collect_samples:
             self.handle_samples(now)
 
@@ -188,23 +190,23 @@ class Reader:
         self.log_file.flush()
 
     def write_reading(self, current_time, mass, mass_difference, flow, permeability):
-        with open(self.filename, "a+") as file:
+        with open(self.filename, "a+", encoding="utf-8") as file:
             file.write(
-                f"{current_time}  {mass:.{self.digits_after_dec}f}  {mass_difference:.{self.digits_after_dec}f}  {flow:.{self.digits_after_dec}f}  {permeability:.{self.digits_after_dec}f}  \r")
+                f"{current_time}  {mass:.{self.digits_after_dec}f}  {mass_difference:.{self.digits_after_dec}f}  {flow:.{self.digits_after_dec}f}  {permeability:.{self.digits_after_dec}f}\n")
 
     def new_sample(self, time_elapsed):
         sample_data = self.sample_data
         if sample_data['current_sample'] == 1:
-            file = open(sample_data['filename'], "a+")
+            file = open(sample_data['filename'], "a+", encoding="utf-8")
             file.write(f"{datetime.date.today()}  {datetime.datetime.now().strftime('%H:%M')}\n")
             file.write(
                 f"Номер пробы; Время начала сбора пробы, сек; Время конца сбора пробы, сек; Объем пробы, мл\n")
             file.close()
-        file = open(sample_data['filename'], "a+")
+        file = open(sample_data['filename'], "a+", encoding="utf-8")
         file.write(f"{sample_data['current_sample']}  "
                    f"{sample_data['start_time']}  "
                    f"{time_elapsed}  "
-                   f"{sample_data['current_volume']:.{self.digits_after_dec}f}  \r")
+                   f"{sample_data['current_volume']:.{self.digits_after_dec}f}\n")
         file.flush()
         file.close()
         self.sample_data['current_sample'] += 1
@@ -227,7 +229,7 @@ class Reader:
         self.sample_data['continue_sample'] = True
         messagebox_answer = sample_max_volume_reached_mb(self.sample_data['max_volume'], self.sample_data['current_sample'], self.layout)
         if messagebox_answer:
-            self.new_sample(time_elapsed)
+            self.new_sample(self.layout.time_elapsed.get())
 
     def update_samples_layout_data(self, time_elapsed):
         self.layout.current_sample.set(self.sample_data['current_sample'])
