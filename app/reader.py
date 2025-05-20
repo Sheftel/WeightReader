@@ -78,29 +78,37 @@ class Reader:
                 setattr(thread, "start_new_sample", False)
                 self.handle_start_new_sample_command(time_elapsed)
             reading = self.get_reading(serial, logging=logging)
+            passed_validation = False
             if reading is not None:
-                if self.validate_reading(reading, last_reading, calculation_data):
+                if self.validate_reading(reading, calculation_data, last_reading = self.last_entry['mass'] if self.last_entry else 0):
+                    passed_validation = True
                     Thread(target=self.handle,
                            args=(layout, time_elapsed, reading,
                                  calculation_data, last_reading, digits_after_dec)).start()
                     last_reading = reading
                 else:
-                    self.interpolation_data = {'reading': reading,
-                                               'time': time_elapsed}
-
+                    passed_validation = False
             if time_elapsed % period == 0:
-                mass, mass_difference, volume, flow, permeability = self.calculate(self.last_read['mass'], calculation_data,
-                               last_reading=self.last_entry['mass'] if self.last_entry else 0)
-                entry = {
-                    'mass': mass,
-                    'mass_difference': mass_difference,
-                    'flow': flow,
-                    'volume':  volume,
-                    'permeability': permeability,
-                }
-                self.write_reading(time_elapsed, entry['mass'], entry['mass_difference'], entry['flow'], entry['permeability'])
-                self.last_entry = entry
-                layout.entries_made.set(layout.entries_made.get() + 1)
+                if passed_validation:
+                    self.handle_interpolation(layout, reading,
+                                 calculation_data, self.last_entry)
+                    mass, mass_difference, volume, flow, permeability = self.calculate(self.last_read['mass'], calculation_data,
+                                   last_reading=self.last_entry['mass'] if self.last_entry else None)
+                    entry = {
+                        'mass': mass,
+                        'mass_difference': mass_difference,
+                        'flow': flow,
+                        'volume':  volume,
+                        'permeability': permeability,
+                    }
+                    self.write_reading(time_elapsed, entry['mass'], entry['mass_difference'], entry['flow'], entry['permeability'])
+                    self.last_entry = entry
+                    layout.entries_made.set(layout.entries_made.get() + 1)
+                else:
+                    self.interpolation_data  = {
+                        'reading': reading,
+                        'time': time_elapsed
+                    }
             time_elapsed += 1
             elapsed = time.time() - start
             time.sleep(1. - min(1., elapsed))
@@ -151,29 +159,14 @@ class Reader:
             reading = self.get_reading(serial)
         return reading
 
-    def validate_reading(self, reading, last_reading, calculation_data):
+    def validate_reading(self, reading, calculation_data, last_reading = 0):
         diff = reading - last_reading if not self.interpolation_data else reading - self.interpolation_data['reading']
         if diff < 0 and abs(diff / last_reading) * 100 > calculation_data['percent']:
             return False
         return True
 
     def handle(self, layout, now, reading, calculation_data, last_reading=None, digits_after_dec=2):
-        if self.interpolation_data:
-            mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
-                                                                               last_reading=self.interpolation_data[
-                                                                                     'reading'])
-            (inter_mass, inter_diff, inter_volume,
-             inter_flow, inter_perm) = self.calculate(self.interpolation_data['reading'], calculation_data,
-                                                      last_reading=last_reading,
-                                                      interpolate=True,
-                                                      prev_diff=self.last_read['mass_difference'],
-                                                      next_diff=mass_difference)
-
-            self.write_reading(self.interpolation_data['time'], inter_mass, inter_diff, inter_flow, inter_perm)
-            layout.entries_made.set(layout.entries_made.get() + 1)
-            self.interpolation_data = None
-        else:
-            mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
+        mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
                                                                                last_reading=last_reading)
         self.last_read = {
             'mass': mass,
@@ -185,6 +178,22 @@ class Reader:
 
         if self.collect_samples:
             self.handle_samples(now)
+
+    def handle_interpolation(self, layout, reading, calculation_data, last_entry=None):
+        if self.interpolation_data:
+            mass, mass_difference, volume, flow, permeability = self.calculate(reading, calculation_data,
+                                                                               last_reading=self.interpolation_data[
+                                                                                     'reading'])
+            (inter_mass, inter_diff, inter_volume,
+             inter_flow, inter_perm) = self.calculate(self.interpolation_data['reading'], calculation_data,
+                                                      last_reading=last_entry['mass'],
+                                                      interpolate=True,
+                                                      prev_diff=last_entry['mass_difference'],
+                                                      next_diff=mass_difference)
+
+            self.write_reading(self.interpolation_data['time'], inter_mass, inter_diff, inter_flow, inter_perm)
+            layout.entries_made.set(layout.entries_made.get() + 1)
+            self.interpolation_data = None
 
     def calculate(self, reading, calculation_data, last_reading=0.0, interpolate=False, prev_diff=None, next_diff=None):
         if interpolate:
