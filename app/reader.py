@@ -224,8 +224,8 @@ class Reader:
                 f"Номер пробы; Время начала сбора пробы, сек; Время конца сбора пробы, сек; Объем пробы, мл\n")
             file.close()
         file = open(sample_data['filename'], "a+", encoding="utf-8")
-        file.write(f"{sample_data['current_sample']}  "
-                   f"{sample_data['start_time']}  "
+        file.write(f"{sample_data['current_sample']:.{self.digits_after_dec}f}  "
+                   f"{sample_data['start_time']:.{self.digits_after_dec}f}  "
                    f"{time_elapsed}  "
                    f"{sample_data['current_volume']:.{self.digits_after_dec}f}\n")
         file.flush()
@@ -255,7 +255,7 @@ class Reader:
     def update_samples_layout_data(self, time_elapsed):
         self.layout.current_sample.set(self.sample_data['current_sample'])
         self.layout.sample_time_elapsed.set(time_elapsed - self.sample_data['start_time'])
-        self.layout.sample_value.set(self.sample_data['current_volume'])
+        self.layout.sample_value.set(f"{self.sample_data['current_volume']:.{self.digits_after_dec}f}")
 
     def get_debug_reading(self):
         # DEBUG LIST GENERATOR
