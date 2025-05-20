@@ -12,7 +12,9 @@ __all__ = [
     'DEFAULT_INTERVAL',
     'MAX_INTERVAL',
     'MIN_INTERVAL',
-    'STATIC_PATH'
+    'STATIC_PATH',
+    'ROOT_PATH',
+    'DEBUG'
 ]
 
 ROOT_PATH = Path(__file__).resolve(strict=True).parent
@@ -21,7 +23,10 @@ STATIC_PATH = ROOT_PATH / 'static'
 config = configparser.ConfigParser()
 config.read(ROOT_PATH.parent / 'config.ini')
 
-APP_TITLE = ''
+APP_TITLE = 'WeightReader 1.2.8'
+
+app = config['APP']
+DEBUG = app.getboolean('DEBUG', 'False')
 
 serial = config['SERIAL']
 SERIAL_PORT = serial.get('SERIAL_PORT', 'COM1')
