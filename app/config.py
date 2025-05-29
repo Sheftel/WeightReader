@@ -23,7 +23,7 @@ STATIC_PATH = ROOT_PATH / 'static'
 config = configparser.ConfigParser()
 config.read(ROOT_PATH.parent / 'config.ini')
 
-APP_TITLE = 'WeightReader 1.2.8'
+APP_TITLE = 'WeightReader'
 
 app = config['APP']
 DEBUG = app.getboolean('DEBUG', 'False')

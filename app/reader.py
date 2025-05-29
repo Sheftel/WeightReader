@@ -224,8 +224,8 @@ class Reader:
                 f"Номер пробы; Время начала сбора пробы, сек; Время конца сбора пробы, сек; Объем пробы, мл\n")
             file.close()
         file = open(sample_data['filename'], "a+", encoding="utf-8")
-        file.write(f"{sample_data['current_sample']:.{self.digits_after_dec}f}  "
-                   f"{sample_data['start_time']:.{self.digits_after_dec}f}  "
+        file.write(f"{sample_data['current_sample']}  "
+                   f"{sample_data['start_time']}  "
                    f"{time_elapsed}  "
                    f"{sample_data['current_volume']:.{self.digits_after_dec}f}\n")
         file.flush()
