@@ -1,13 +1,13 @@
 import math
 
 from datetime import date
-from threading import Thread
+from threading import Thread, Event as ThrEvent
 from tkinter import *
 from tkinter import ttk, filedialog as fd
 from serial import Serial, SerialException
 
 from config import *
-from utils import raise_error, xview_event_handler, sample_new_sample_button_mb
+from utils import raise_error, xview_event_handler, sample_pack_mb, DialogLayout
 from reader import Reader
 
 
@@ -15,6 +15,7 @@ class Layout:
     def __init__(self, root):
         self.root = root
         self.thread = None
+        self.pause_event = ThrEvent()
         self.serial = None
         self.is_running = False
         self.runtime_seconds = None
@@ -224,9 +225,12 @@ class Layout:
         self.sample_value_text = ttk.Entry(samples_frame, textvariable=self.sample_value,
                                            state='readonly', width=30)
 
-        self.new_sample_button = ttk.Button(samples_frame, text='Перейти к следующей пробе', command=self.new_sample,
+        self.new_sample_button = ttk.Button(samples_frame, text='Перейти к следующей пробе', command=self.new_sample_button_click,
                                             width=30,
                                             state=DISABLED)
+        self.sample_pack_button = ttk.Button(samples_frame, text='Новый лоток', command=self.new_sample_pack,
+                                              width=30,
+                                              state=DISABLED)
 
         # sample grid
 
@@ -243,7 +247,8 @@ class Layout:
         self.sample_value_label.grid(column=0, row=8, sticky=(N, W), padx=(10, 10), pady=(1, 1))
         self.sample_value_text.grid(column=0, row=9, sticky=(N, W), padx=(10, 10), pady=(1, 1))
 
-        self.new_sample_button.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(15, 17))
+        self.new_sample_button.grid(column=0, row=10, sticky=(N, W), padx=(10, 10), pady=(15, 5))
+        self.sample_pack_button.grid(column=0, row=11, sticky=(N, W), padx=(10, 10), pady=(5, 17))
 
         # run buttons
         self.start_button = ttk.Button(run_buttons, text='Старт', command=self.start, width=52, state=NORMAL)
@@ -319,8 +324,9 @@ class Layout:
         self.runtime_seconds = self.runtime.get() * 60 if self.runtime.get() > 0 else None
         self.is_running = True
 
-        self.thread = Thread(target=Reader.read_data,
+        self.thread = Thread(target=Reader.run,
                              args=(Reader(), self, self.serial, calculation_data, samples_data, self.filename.get(),
+                                   self.pause_event,
                                    self.interval.get(), self.runtime_seconds, self.digits_after_dec.get(),
                                    self.logging.get()))
         self.thread.start()
@@ -374,6 +380,7 @@ class Layout:
             self.max_sample_value_spinbox.config(state=DISABLED)
             # enable new sample button
             self.new_sample_button.config(state=NORMAL)
+            self.sample_pack_button.config(state=NORMAL)
 
         self.collect_samples_checkbox.config(state=DISABLED)
 
@@ -383,15 +390,39 @@ class Layout:
             self.max_sample_value_spinbox.config(state=NORMAL)
             # enable new sample button
             self.new_sample_button.config(state=DISABLED)
+            self.sample_pack_button.config(state=DISABLED)
 
         self.collect_samples_checkbox.config(state=NORMAL)
 
+    def new_sample_button_click(self):
+        DialogLayout(self.root, self,
+                     title="Перейти к следующей пробе",
+                     message=f"Собрано {self.sample_value.get()} мл для пробы {self.current_sample.get()}\nПерейти к следующей пробе?",
+                     command1=self.new_sample,
+                     command2=self.new_sample_pack,
+                     command3=None,
+                     buttontext1='Новая проба',
+                     buttontext2="Новый лоток",
+                     buttontext3="Отмена")
+
     def new_sample(self):
-        if sample_new_sample_button_mb(current_sample=self.current_sample.get(),
-                                       current_volume=self.sample_value.get(),
-                                       layout=self)\
-                and self.thread:
-            self.thread.start_new_sample = True
+        self.thread.start_new_sample = True
+
+    def new_sample_pack(self):
+        if not self.thread:
+            raise Exception
+        self.thread.pause = True
+        self.thread.pause_event = self.pause_event
+
+        self.thread.start_new_sample = True
+        if sample_pack_mb(layout=self):
+            self.thread.start_new_sample_pack = True
+
+        self.thread.pause_event.set()
+
+    def sample_pack_button_click(self):
+        self.new_sample_pack()
+
 
     def reset_layout(self):
         self.filename_entry.config(state=NORMAL)
@@ -413,13 +444,12 @@ class Layout:
 
         self.handle_samples_stop()
 
-
 class SettingsLayout:
     def __init__(self, root, parent):
         self.root = root
         self.parent = parent
         self.window = Toplevel(self.root)
-        self.window.title = 'Настройки порта'
+        self.window.title('Настройки порта')
         self.window.resizable(FALSE, FALSE)
         frame = ttk.Frame(self.window, padding=(5, 5, 5, 5))
 
