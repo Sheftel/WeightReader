@@ -24,7 +24,7 @@ class Layout:
         # frames
         mainframe = ttk.Frame(root, padding="5 5 5 5")
         app_params = ttk.Frame(mainframe)
-        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=420, height=400)
+        run_params = ttk.LabelFrame(mainframe, text='Параметры', width=420, height=435)
         output = ttk.LabelFrame(mainframe, text='Вывод', width=220, height=120)
         samples_frame = ttk.LabelFrame(mainframe, text='Cбор проб', width=220, height=350)
         flow_dimension_frame = ttk.LabelFrame(run_params, text='Размерность потока', width=180, height=50)
@@ -256,6 +256,7 @@ class Layout:
         self.start_button.grid(column=0, row=0, sticky=(N, W), padx=(0, 5), pady=(1, 5), columnspan=2)
         self.stop_button.grid(column=2, row=0, sticky=(N, W), padx=(5, 0), pady=(1, 5), columnspan=2)
 
+        self.root.update()
         self.serial_settings()
 
     def select_file(self):
@@ -279,6 +280,7 @@ class Layout:
         if interval > MAX_INTERVAL or interval < MIN_INTERVAL:
             return self.start_button.config(state=DISABLED)
         self.start_button.config(state=NORMAL)
+        return None
 
     def validate_range(self, user_input):
         self.start_button.config(state=DISABLED)
@@ -331,6 +333,17 @@ class Layout:
                                    self.logging.get()))
         self.thread.start()
 
+        self.set_layout_to_running_state()
+
+
+    def stop(self):
+        if self.thread:
+            self.thread.stop_thread = True
+            self.is_running = False
+
+        self.set_layout_to_stopped_state()
+
+    def set_layout_to_running_state(self):
         self.stop_button.config(state=NORMAL)
         self.filename_entry.config(state='readonly')
         self.settings_button.config(state=DISABLED)
@@ -350,11 +363,7 @@ class Layout:
 
         self.handle_samples_start()
 
-    def stop(self):
-        if self.thread:
-            self.thread.stop_thread = True
-            self.is_running = False
-
+    def set_layout_to_stopped_state(self):
         self.filename_entry.config(state=NORMAL)
         self.settings_button.config(state=NORMAL)
         self.difference_spinbox.config(state=NORMAL)
@@ -450,7 +459,19 @@ class SettingsLayout:
         self.parent = parent
         self.window = Toplevel(self.root)
         self.window.title('Настройки порта')
+        self.window.iconbitmap(STATIC_PATH / "icon.ico")
         self.window.resizable(FALSE, FALSE)
+        x = self.root.winfo_rootx()
+        y = self.root.winfo_rooty()
+        height = self.root.winfo_height()
+        width = self.root.winfo_width()
+
+        self.window.update()
+        settings_height = self.window.winfo_height()
+        settings_width = self.window.winfo_width()
+
+        self.window.geometry("+%d+%d" % (x + (width/2) - (settings_width/2), y + (height/2) - (settings_height/2)))
+
         frame = ttk.Frame(self.window, padding=(5, 5, 5, 5))
 
         if self.parent.serial:

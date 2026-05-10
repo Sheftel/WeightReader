@@ -3,6 +3,9 @@ from tkinter import messagebox as mb
 from tkinter import *
 from tkinter import ttk
 
+from config import STATIC_PATH
+
+
 def raise_error(title="Ошибка", message="Сообщение об ошибке", layout=None):
     mb.showerror(title=title, message=message,
                  parent=layout.root)
@@ -44,7 +47,9 @@ class DialogLayout:
         self.parent = parent
         self.window = Toplevel(self.root)
         self.window.title(title)
+        self.window.iconbitmap(STATIC_PATH / "icon.ico")
         self.window.resizable(FALSE, FALSE)
+
         self.command1 = command1
         self.command2 = command2
         self.command3 = command3
@@ -63,6 +68,19 @@ class DialogLayout:
 
         cancel_button = ttk.Button(frame, text=buttontext3, command=self.buttoncommand3)
         cancel_button.grid(row=1, column=2, sticky=N)
+
+
+        x = self.root.winfo_rootx()
+        y = self.root.winfo_rooty()
+        height = self.root.winfo_height()
+        width = self.root.winfo_width()
+
+        self.window.update()
+        dialog_height = self.window.winfo_height()
+        dialog_width = self.window.winfo_width()
+
+        self.window.geometry("+%d+%d" % (x + (width/2) - (dialog_width/2), y + (height/2) - (dialog_height/2)))
+        self.window.update()
 
         self.window.grab_set()
 

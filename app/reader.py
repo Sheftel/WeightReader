@@ -56,6 +56,7 @@ class Reader:
         if samples_data['collect_samples']:
             self.collect_samples = True
             self.sample_data['max_volume'] = samples_data['max_sample_value']
+            self.sample_data['current_volume'] = 0.0
             self.sample_data['current_sample'] = 1
             self.sample_data['start_time'] = 0
             self.sample_data['filename'] = self.filename.rstrip('.txt') + "_пробы.txt"
